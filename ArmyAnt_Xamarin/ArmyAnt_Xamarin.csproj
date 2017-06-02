@@ -8,7 +8,7 @@
     <ProjectGuid>{67F9D3A8-F71E-4428-913F-C37AE82CDB24}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ArmyAnt_Xamarin</RootNamespace>
+    <RootNamespace>ArmyAnt</RootNamespace>
     <AssemblyName>ArmyAnt_Xamarin</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Profile111</TargetFrameworkProfile>
@@ -35,8 +35,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ArmyAnt_Xamarin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utility\Json\EType.cs" />
+    <Compile Include="Utility\Json\ICollection.cs" />
+    <Compile Include="Utility\Json\IUnit.cs" />
+    <Compile Include="Utility\Json\Array.cs" />
+    <Compile Include="Utility\Json\Boolean.cs" />
+    <Compile Include="Utility\Json\Number.cs" />
+    <Compile Include="Utility\Json\Object.cs" />
+    <Compile Include="Utility\Json\String.cs" />
+    <Compile Include="ArmyAnt.cs" />
+    <Compile Include="Utility\Json\Undefined.cs" />
+    <Compile Include="Utility\Json\Null.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Xamarin.Forms.Core, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -54,6 +64,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Utility\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Import Project="..\packages\Xamarin.Forms.2.0.0.6482\build\portable-win+net45+wp80+win81+wpa81+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Xamarin.Forms.targets" Condition="Exists('..\packages\Xamarin.Forms.2.0.0.6482\build\portable-win+net45+wp80+win81+wpa81+MonoAndroid10+MonoTouch10+Xamarin.iOS10\Xamarin.Forms.targets')" />
