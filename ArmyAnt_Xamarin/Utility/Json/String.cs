@@ -1,14 +1,14 @@
 ﻿using System;
-namespace ArmyAnt.ArmyAnt.Utility.Json
+namespace ArmyAnt.Utility.Json
 {
-	public class JsonString : JsonNull
+	public class JString : IUnit
 	{
-		public JsonString(string v = "")
+		public JString(string v = "")
 			: base()
 		{
 			value = v;
 		}
-		public override string String
+		public string String
 		{
 			get
 			{
@@ -16,42 +16,50 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 			set
 			{
-				hasValue = true;
 				var realValue = value.Trim().Trim(new char[] { '\r', '\n' });
 				if (realValue[realValue.Length - 1] != '\0')
 					realValue += '\0';
 				if (realValue[0] != '"' || realValue[realValue.Length - 2] != '"')
 				{
-					hasValue = false;
 					return;
 				}
 				this.value = realValue.Remove(realValue.Length - 2).Remove(0, 1);
 			}
 		}
-		public override EJsonValueType Type
+		public EType Type
 		{
 			get
 			{
-				return EJsonValueType.String;
-			}
-		}
-		public override object Value
-		{
-			get
-			{
-				return value;
-			}
-			set
-			{
-				this.value = Convert.ToString(value);
+				return EType.String;
 			}
 		}
 
-		public override string ToString()
-		{
-			return value;
+        public JArray ToArray()
+        {
+            return null;
+        }
+
+        public bool ToBool()
+        {
+            return value == "";
+        }
+
+        public float ToFloat()
+        {
+            return 0.0;
+        }
+
+        public int ToInt()
+        {
+            return 0;
+        }
+
+        public JObject ToObject()
+        {
+            return null;
 		}
-		private string value = "";
-	}
+
+        private string value = "";
+    }
 
 }

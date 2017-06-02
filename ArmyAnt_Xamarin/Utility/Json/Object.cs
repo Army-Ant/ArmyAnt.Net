@@ -1,81 +1,72 @@
 ﻿using System;
-namespace ArmyAnt.ArmyAnt.Utility.Json
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace ArmyAnt.Utility.Json
 {
 	
-	public class JsonObject : JsonNull, IJsonCollection, IDictionary<string, IUnit>
+	public class JObject : IUnit, ICollection, IDictionary<string, IUnit>
 	{
-		public JsonObject(Dictionary<string, IUnit> v = null)
+		public JObject(Dictionary<string, IUnit> v = null)
 			: base()
 		{
 			if (v != null)
 				value = v;
 		}
-		public override string String
+		public virtual string String
+        {
+            get
+            {
+                var ret = "{\n";
+                var keys = value.Keys.ToArray();
+                for (var i = 0; keys != null && i < keys.Length - 1; i++)
+                {
+                    ret += "  \"" + keys[i] + '"' + " : " + value[keys[i]].String + ",\n";
+                }
+                if (keys != null && keys.Length > 0)
+                    ret += "  \"" + keys[keys.Length - 1] + '"' + " : " + value[keys[keys.Length - 1]].String + "\n}";
+                else
+                    ret += "\n}";
+                return ret;
+            }
+            set
+            {
+                var realValue = value.Trim().Trim(new char[] { '\r', '\n' });
+                if (realValue[realValue.Length - 1] != '\0')
+                    realValue += '\0';
+                if (realValue[0] != '{' || realValue[realValue.Length - 2] != '}')
+                {
+                    return;
+                }
+                realValue = realValue.Remove(realValue.Length - 2).Remove(0, 1);
+                realValue = realValue.Trim().Trim(new char[] { '\r', '\n' });
+                this.value = new Dictionary<string, IUnit>();
+                if (realValue != "")
+                    try
+                    {
+                        var res = Helper.CutByComma(realValue);
+                        for (int i = 0; i < res.Length; i++)
+                        {
+                            var ins = CutKeyValue(res[i]);
+                            this.value[ins.Key] = Helper.Create(ins.Value);
+                        }
+                    }
+                    catch (JException e)
+                    {
+
+                    }
+            }
+        }
+		public virtual EType Type
 		{
 			get
 			{
-				var ret = "{\n";
-				var keys = value.Keys.ToArray();
-				for (var i = 0; keys != null && i < keys.Length - 1; i++)
-				{
-					ret += "  \"" + keys[i] + '"' + " : " + value[keys[i]].String + ",\n";
-				}
-				if (keys != null && keys.Length > 0)
-					ret += "  \"" + keys[keys.Length - 1] + '"' + " : " + value[keys[keys.Length - 1]].String + "\n}";
-				else
-					ret += "\n}";
-				return ret;
-			}
-			set
-			{
-				hasValue = true;
-				var realValue = value.Trim().Trim(new char[] { '\r', '\n' });
-				if (realValue[realValue.Length - 1] != '\0')
-					realValue += '\0';
-				if (realValue[0] != '{' || realValue[realValue.Length - 2] != '}')
-				{
-					hasValue = false;
-					return;
-				}
-				realValue = realValue.Remove(realValue.Length - 2).Remove(0, 1);
-				realValue = realValue.Trim().Trim(new char[] { '\r', '\n' });
-				this.value = new Dictionary<string, IUnit>();
-				if (realValue != "")
-					try
-					{
-						var res = CutByComma(realValue);
-						for (int i = 0; i < res.Length; i++)
-						{
-							var ins = CutKeyValue(res[i]);
-							this.value[ins.Key] = Create(ins.Value);
-						}
-					}
-					catch (JsonException)
-					{
-						hasValue = false;
-					}
-			}
-		}
-		public override EJsonValueType Type
-		{
-			get
-			{
-				return EJsonValueType.Object;
-			}
-		}
-		public override object Value
-		{
-			get
-			{
-				return value;
-			}
-			set
-			{
-				this.value = (Dictionary<string, IUnit>)value;
+				return EType.Object;
 			}
 		}
 
-		public ICollection<string> Keys
+		public virtual ICollection<string> Keys
 		{
 			get
 			{
@@ -83,7 +74,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public ICollection<IUnit> Values
+		public virtual ICollection<IUnit> Values
 		{
 			get
 			{
@@ -91,7 +82,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public int Count
+		public virtual int Count
 		{
 			get
 			{
@@ -99,7 +90,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public bool IsReadOnly
+		public virtual bool IsReadOnly
 		{
 			get
 			{
@@ -107,7 +98,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public int Length
+		public virtual int Length
 		{
 			get
 			{
@@ -115,7 +106,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public object SyncRoot
+		public virtual object SyncRoot
 		{
 			get
 			{
@@ -123,7 +114,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public bool IsSynchronized
+		public virtual bool IsSynchronized
 		{
 			get
 			{
@@ -131,7 +122,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public override IUnit this[string key]
+        public virtual IUnit this[string key]
 		{
 			get
 			{
@@ -146,7 +137,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public bool AddChild(IUnit child, string tag)
+		public virtual bool AddChild(IUnit child, string tag)
 		{
 			if (value.Keys.Contains(tag))
 				return false;
@@ -154,13 +145,13 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			return true;
 		}
 
-		public bool RemoveChild(string tag)
+		public virtual bool RemoveChild(string tag)
 		{
 			value.Remove(tag);
 			return true;
 		}
 
-		public IUnit GetChild(string tag)
+		public virtual IUnit GetChild(string tag)
 		{
 			return value[tag];
 		}
@@ -169,7 +160,7 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			str = str.Trim().Trim(new char[] { '\r', '\n' });
 			char isSingleKey = str[0];
 			if (str[0] != '"' && str[0] != '\'')
-				throw new JsonException();
+				throw new Exception();
 			var key = "";
 			var count = 1;
 			while (count < str.Length)
@@ -181,46 +172,46 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 			str = str.Remove(0, count + 1).Trim().Trim(new char[] { '\r', '\n' });
 			if (str[0] != ':')
-				throw new JsonException();
+				throw new Exception();
 			return new KeyValuePair<string, string>(key, str.Remove(0, 1).Trim().Trim(new char[] { '\r', '\n' }));
 		}
 
-		public bool ContainsKey(string key)
+		public virtual bool ContainsKey(string key)
 		{
 			return value.ContainsKey(key);
 		}
 
-		public void Add(string key, IUnit value)
+		public virtual void Add(string key, IUnit value)
 		{
 			this.value.Add(key, value);
 		}
 
-		public bool Remove(string key)
+		public virtual bool Remove(string key)
 		{
 			return value.Remove(key);
 		}
 
-		public bool TryGetValue(string key, out IUnit value)
+		public virtual bool TryGetValue(string key, out IUnit value)
 		{
 			return this.value.TryGetValue(key, out value);
 		}
 
-		public void Add(KeyValuePair<string, IUnit> item)
+		public virtual void Add(KeyValuePair<string, IUnit> item)
 		{
 			value.Add(item.Key, item.Value);
 		}
 
-		public void Clear()
+		public virtual void Clear()
 		{
 			value.Clear();
 		}
 
-		public bool Contains(KeyValuePair<string, IUnit> item)
+		public virtual bool Contains(KeyValuePair<string, IUnit> item)
 		{
 			return value.Contains(item);
 		}
 
-		public void CopyTo(KeyValuePair<string, IUnit>[] array, int arrayIndex)
+		public virtual void CopyTo(KeyValuePair<string, IUnit>[] array, int arrayIndex)
 		{
 			var keys = value.Keys.ToArray();
 			for (var i = 0; i < value.Count; i++)
@@ -229,34 +220,59 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 			}
 		}
 
-		public bool Remove(KeyValuePair<string, IUnit> item)
+		public virtual bool Remove(KeyValuePair<string, IUnit> item)
 		{
 			if (value[item.Key] == item.Value)
 				return value.Remove(item.Key);
 			return false;
 		}
 
-		public IEnumerator<KeyValuePair<string, IUnit>> GetEnumerator()
+		public virtual IEnumerator<KeyValuePair<string, IUnit>> GetEnumerator()
 		{
 			return value.GetEnumerator();
 		}
 
-		public void CopyTo(Array array, int index)
+		public virtual void CopyTo(Array array, int index)
 		{
 			CopyTo((KeyValuePair<string, IUnit>[])array, index);
 		}
 
-		IEnumerator IEnumerable.GetEnumerator()
+		virtual IEnumerator IEnumerable.GetEnumerator()
 		{
 			return value.GetEnumerator();
 		}
 
-		IEnumerator<IUnit> IEnumerable<IUnit>.GetEnumerator()
+		virtual IEnumerator<IUnit> IEnumerable<IUnit>.GetEnumerator()
 		{
 			return value.Values.GetEnumerator();
 		}
 
-		private Dictionary<string, IUnit> value = new Dictionary<string, IUnit>();
+        public virtual bool ToBool()
+        {
+            return value.Count > 0;
+        }
+
+        public virtual int ToInt()
+        {
+            return 0;
+        }
+
+        public virtual float ToFloat()
+        {
+            return 0.0;
+        }
+
+        public virtual JObject ToObject()
+        {
+            return this;
+        }
+
+        public virtual JArray ToArray()
+        {
+            return null;
+        }
+
+        private Dictionary<string, IUnit> value = new Dictionary<string, IUnit>();
 	}
 
 }

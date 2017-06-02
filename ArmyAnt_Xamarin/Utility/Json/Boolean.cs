@@ -1,18 +1,18 @@
 ﻿using System;
-namespace ArmyAnt.ArmyAnt.Utility.Json
+namespace ArmyAnt.Utility.Json
 {
-	public class JsonBoolean : JsonNull
+	public class JBoolean : IUnit
 	{
-		public JsonBoolean(bool v = false)
-			: base()
+		public JBoolean(bool v = false)
 		{
 			value = v;
 		}
-		public override string String
+
+		public string String
 		{
 			get
 			{
-				return value.ToString().ToLower();
+				return value.ToString.ToLower();
 			}
 			set
 			{
@@ -20,37 +20,49 @@ namespace ArmyAnt.ArmyAnt.Utility.Json
 				{
 					case "true":
 						this.value = true;
-						hasValue = true;
 						break;
 					case "false":
-						this.value = false;
-						hasValue = true;
-						break;
 					default:
-						hasValue = false;
+						this.value = false;
 						break;
 				}
 			}
 		}
-		public override EJsonValueType Type
+
+		public EType Type
 		{
 			get
 			{
-				return EJsonValueType.Boolean;
+				return EType.Boolean;
 			}
 		}
-		public override object Value
-		{
-			get
-			{
-				return value;
-			}
-			set
-			{
-				this.value = Convert.ToBoolean(value);
-			}
-		}
-		private bool value = false;
-	}
+
+        private bool value = false;
+
+        public bool ToBool()
+        {
+            return value;
+        }
+
+        public int ToInt()
+        {
+            return value ? 1 : 0;
+        }
+
+        public float ToFloat()
+        {
+            return value ? 1.0 : 0.0;
+        }
+
+        public JObject ToObject()
+        {
+            return null;
+        }
+
+        public JArray ToArray()
+        {
+            return null;
+        }
+    }
 
 }

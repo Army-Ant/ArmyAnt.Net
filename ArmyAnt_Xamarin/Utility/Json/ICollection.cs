@@ -1,4 +1,6 @@
-﻿using System;
+﻿using System.Collections.Generic;
+using ArmyAnt.Utility.Json;
+
 namespace ArmyAnt.ArmyAnt.Utility.Json
 {
 	public interface IJsonCollection : IUnit, IEnumerable<IUnit>

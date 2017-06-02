@@ -18,88 +18,24 @@ namespace ArmyAnt
             {
                 get;
             }
-            object Value
-            {
-                get; set;
-            }
-            IUnit this[string index] { get; set; }
-            bool HasValue();
+            bool ToBool();
+            int ToInt();
+            float ToFloat();
+            string ToString { get; }
+
+            JObject ToObject();
+            JArray ToArray();
         }
 
-        public class JsonUndefined : IUnit
-        {
-            public virtual string String
-            {
-                get
-                {
-                    throw new JsonException();
-                }
-                set
-                {
-                }
-            }
-            public virtual EType Type
-            {
-                get
-                {
-                    return EType.Undefined;
-                }
-            }
-            public virtual object Value
-            {
-                get
-                {
-                    return null;
-                }
-                set
-                {
-                    throw new JsonException();
-                }
-            }
+        public class Helper
+		{
+			public static IUnit Create(string value)
+			{
+				// TODO: redisign it
+				return null;
+			}
 
-            public virtual IUnit this[string index]
-            {
-                get
-                {
-                    throw new NotImplementedException();
-                }
-
-                set
-                {
-                    throw new NotImplementedException();
-                }
-            }
-
-            public virtual bool HasValue() { return false; }
-            public static IUnit Create(string value)
-            {
-                IUnit i = new JsonObject();
-                i.String = value;
-                if (i.HasValue())
-                    return i;
-                i = new JsonArray();
-                i.String = value;
-                if (i.HasValue())
-                    return i;
-                i = new JsonString();
-                i.String = value;
-                if (i.HasValue())
-                    return i;
-                i = new JsonBoolean();
-                i.String = value;
-                if (i.HasValue())
-                    return i;
-                i = new JsonNull();
-                i.String = value;
-                if (i.HasValue())
-                    return i;
-                i = new JsonNumeric();
-                i.String = value;
-                if (i.HasValue())
-                    return i;
-                return null;
-            }
-            public static string[] CutByComma(string value)
+            internal static string[] CutByComma(string value)
             {
                 value = value.Trim().Trim(new char[] { '\r', '\n' });
                 var ret = new List<string>();
@@ -139,7 +75,7 @@ namespace ArmyAnt
                     else if (value[i] == '}' && !isInSingleString && !isInDoubleString)
                         deepInObject--;
                     if (deepInArray < 0 || deepInObject < 0)
-                        throw new JsonException();
+                        throw new JException();
                     if (deepInArray == 0 && deepInObject == 0 && !isInSingleString && !isInDoubleString && value[i] == ',')
                     {
                         ret.Add(tmp);
@@ -155,52 +91,12 @@ namespace ArmyAnt
             }
         }
 
-        public class JsonNull : JsonUndefined
+        public class JException : System.Exception
         {
-            public override string String
-            {
-                get
-                {
-                    return nullvalue;
-                }
-                set
-                {
-                    if (value.Trim().Trim(new char[] { '\r', '\n' }) == nullvalue)
-                        hasValue = true;
-                }
-            }
-            public override EType Type
-            {
-                get
-                {
-                    return EType.Null;
-                }
-            }
-            public override object Value
-            {
-                get
-                {
-                    return null;
-                }
-                set
-                {
-                    throw new JsonException();
-                }
-            }
-            public override bool HasValue()
-            {
-                return hasValue;
-            }
-            protected bool hasValue = false;
-            private const string nullvalue = "null";
-        }
-
-        public class JsonException : Exception
-        {
-            public JsonException() : base()
+            public JException() : base()
             {
             }
-            public JsonException(string message) : base(message)
+            public JException(string message) : base(message)
             {
             }
 

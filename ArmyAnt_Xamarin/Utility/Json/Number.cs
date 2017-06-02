@@ -1,100 +1,113 @@
 ﻿using System;
-namespace ArmyAnt.ArmyAnt.Utility.Json
+namespace ArmyAnt.Utility.Json
 {
-	public class JsonNumeric : JsonNull
+	public class JNumber : IUnit
 	{
-		public JsonNumeric(byte v = 0)
+		public JNumber(byte v = 0)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(short v)
+		public JNumber(short v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(ushort v)
+		public JNumber(ushort v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(int v)
+		public JNumber(int v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(uint v)
+		public JNumber(uint v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(long v)
+		public JNumber(long v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(ulong v)
+		public JNumber(ulong v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(float v)
+		public JNumber(float v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(double v)
+		public JNumber(double v)
 			: base()
 		{
 			value = v;
 		}
-		public JsonNumeric(decimal v)
+		public JNumber(decimal v)
 			: base()
 		{
 			value = Convert.ToDouble(v);
 		}
-		public override string String
+		public string String
 		{
 			get
 			{
 				if (value - Convert.ToInt64(value) == 0)
-					return Convert.ToInt64(value).ToString();
-				return value.ToString();
+					return Convert.ToInt64(value).ToString;
+				return value.ToString;
 			}
 			set
 			{
 				try
 				{
 					this.value = Convert.ToDouble(value);
-					hasValue = true;
 				}
 				catch (FormatException)
 				{
-					hasValue = false;
+                    
 				}
 			}
 		}
-		public override EJsonValueType Type
+
+		public EType Type
 		{
 			get
 			{
-				return EJsonValueType.Numeric;
+				return EType.Numeric;
 			}
 		}
-		public override object Value
-		{
-			get
-			{
-				if (value - Convert.ToInt64(value) == 0)
-					return Convert.ToInt64(value);
-				return value;
-			}
-			set
-			{
-				this.value = Convert.ToDouble(value);
-			}
+
+        public bool ToBool()
+        {
+            return value == 0.0;
+        }
+
+        public int ToInt()
+        {
+            return (int)value;
+        }
+
+        public float ToFloat()
+        {
+            return (float)value;
+        }
+
+        public JObject ToObject()
+        {
+            return null;
+        }
+
+        public JArray ToArray()
+        {
+            return null;
 		}
+
 		private double value = 0;
-	}
+    }
 
 }
