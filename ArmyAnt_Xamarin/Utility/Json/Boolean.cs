@@ -2,8 +2,22 @@
 namespace ArmyAnt.Utility.Json
 {
 	public class JBoolean : IUnit
-	{
-		public JBoolean(bool v = false)
+    {
+        public static IUnit isThis(string text)
+        {
+            var realText = text.Trim().Trim(new char[] { '\r', '\n' });
+            switch (realText)
+            {
+                case "true":
+                    return new JBoolean(true);
+                case "false":
+                    return new JBoolean(false);
+                default:
+                    return null;
+            }
+        }
+
+        public JBoolean(bool v = false)
 		{
 			value = v;
 		}
@@ -12,7 +26,7 @@ namespace ArmyAnt.Utility.Json
 		{
 			get
 			{
-				return value.ToString.ToLower();
+				return value.ToString().ToLower();
 			}
 			set
 			{
@@ -49,7 +63,7 @@ namespace ArmyAnt.Utility.Json
             return value ? 1 : 0;
         }
 
-        public float ToFloat()
+        public double ToFloat()
         {
             return value ? 1.0 : 0.0;
         }
@@ -60,6 +74,11 @@ namespace ArmyAnt.Utility.Json
         }
 
         public JArray ToArray()
+        {
+            return null;
+        }
+
+        public override string ToString()
         {
             return null;
         }

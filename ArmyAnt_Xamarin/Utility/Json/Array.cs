@@ -4,24 +4,39 @@ using System.Collections.Generic;
 
 namespace ArmyAnt.Utility.Json
 {
-    public class JArray : JObject, ICollection, IList<IUnit>, ICollection<IUnit>
+    public class JArray : IJsonCollection, IList<IUnit>, ICollection<IUnit>
     {
+        public static IUnit isThis(string text)
+        {
+            try
+            {
+                var ret = new JArray();
+                ret.String = text;
+                return ret;
+            }
+            catch (JException)
+            {
+                return null;
+            }
+        }
+
         public JArray(IUnit[] v = null)
             : base()
         {
-            array = v;
+            if (v != null)
+                value = new List<IUnit>(v);
         }
-        public override string String
+        public string String
         {
             get
             {
                 var ret = "[\n";
-                for (var i = 0; array != null && i < array.Length - 1; i++)
+                for (var i = 0; value != null && i < value.Count - 1; i++)
                 {
-                    ret += "  " + array[i].String + ",\n";
+                    ret += "  " + value[i].String + ",\n";
                 }
-                if (array != null && array.Length > 0)
-                    ret += "  " + array[array.Length - 1].String + "\n]";
+                if (value != null && value.Count > 0)
+                    ret += "  " + value[value.Count - 1].String + "\n]";
                 else
                     ret += "\n]";
                 return ret;
@@ -41,19 +56,18 @@ namespace ArmyAnt.Utility.Json
                     try
                     {
                         var res = Helper.CutByComma(realValue);
-                        var list = new List<IUnit>();
+                        this.value = new List<IUnit>();
                         for (int i = 0; i < res.Length; i++)
                         {
-                            list.Add(Helper.Create(res[i]));
+                            this.value.Add(Helper.Create(res[i]));
                         }
-                        array = list.ToArray();
                     }
                     catch (JException)
                     {
                     }
             }
         }
-        public override EType Type
+        public EType Type
         {
             get
             {
@@ -61,15 +75,15 @@ namespace ArmyAnt.Utility.Json
             }
         }
 
-        public override int Length
+        public int Length
         {
             get
             {
-                return array == null ? 0 : array.Length;
+                return value.Count;
             }
         }
 
-        public override bool IsReadOnly
+        public bool IsReadOnly
         {
             get
             {
@@ -85,27 +99,11 @@ namespace ArmyAnt.Utility.Json
             }
         }
 
-        public override int Count
+        public int Count
         {
             get
             {
-                return array == null ? 0 : array.Length;
-            }
-        }
-
-        public override object SyncRoot
-        {
-            get
-            {
-                return array == null ? null : array.SyncRoot;
-            }
-        }
-
-        public override bool IsSynchronized
-        {
-            get
-            {
-                return array == null ? false : array.IsSynchronized;
+                return value == null ? 0 : value.Count;
             }
         }
 
@@ -113,24 +111,22 @@ namespace ArmyAnt.Utility.Json
         {
             get
             {
-                return array[index];
+                return value[index];
             }
 
             set
             {
-                this.array[index] = value;
+                this.value[index] = value;
             }
         }
 
-        public override bool AddChild(IUnit child, string tag = null)
+        public bool AddChild(IUnit child, string tag = null)
         {
-            var ret = array.ToList();
-            ret.Add(child);
-            array = ret.ToJArray();
+            value.Add(child);
             return true;
         }
 
-        public override bool RemoveChild(string tag)
+        public bool RemoveChild(string tag)
         {
             int num;
             try
@@ -141,13 +137,11 @@ namespace ArmyAnt.Utility.Json
             {
                 return false;
             }
-            var ret = array.ToList();
-            ret.RemoveAt(num);
-            array = ret.ToJArray();
+            value.RemoveAt(num);
             return true;
         }
 
-        public override IUnit GetChild(string tag)
+        public IUnit GetChild(string tag)
         {
             int num;
             try
@@ -158,134 +152,92 @@ namespace ArmyAnt.Utility.Json
             {
                 return null;
             }
-            return array[num];
+            return value[num];
         }
 
-        public void Add(IUnit array)
+        public void Add(IUnit value)
         {
-            if (this.array == null)
-            {
-                this.array = new IUnit[1];
-                this.array[0] = array;
-            }
-            else
-            {
-                var oldarray = this.array;
-                this.array = new IUnit[oldarray.Length + 1];
-                for (var i = 0; i < oldarray.Length; i++)
-                {
-                    this.array[i] = oldarray[i];
-                }
-                this.array[oldarray.Length] = array;
-            }
+            this.value.Add(value);
         }
 
-        public bool Contains(IUnit array)
+        public bool Contains(IUnit value)
         {
-            return this.array == null ? false : this.array.Contains(array);
+            return this.value.Contains(value);
         }
 
-        public override void Clear()
+        public void Clear()
         {
-            array = null;
+            value = null;
         }
 
-        public int IndexOf(IUnit array)
+        public int IndexOf(IUnit value)
         {
-            if (this.array == null)
-                return -1;
-            for (var i = 0; i < this.array.Length; i++)
-            {
-                if (this.array[i] == array)
-                    return i;
-            }
-            return -1;
+            return this.value.IndexOf(value);
         }
 
-        public void Insert(int index, IUnit array)
+        public void Insert(int index, IUnit value)
         {
-            if (this.array == null && index == 0)
-            {
-                this.array = new IUnit[1];
-                this.array[0] = array;
-            }
-            else if (index > this.array.Length || index + this.array.Length < 0)
-            {
-                throw new ArgumentOutOfRangeException("index", index, "Wrong argument array of \"index\" !");
-            }
-            else
-            {
-                if (index < 0)
-                    index += this.array.Length;
-                var oldarray = this.array;
-                this.array = new IUnit[oldarray.Length + 1];
-                for (var i = 0; i < index; i++)
-                {
-                    this.array[i] = oldarray[i];
-                }
-                this.array[index] = (IUnit)array;
-                for (var i = index; i < oldarray.Length; i++)
-                {
-                    this.array[i + 1] = oldarray[i];
-                }
-            }
+            this.value.Insert(index, value);
         }
 
-        public bool Remove(IUnit array)
+        public bool Remove(IUnit value)
         {
-            var index = IndexOf(array);
-            if (index >= 0)
-            {
-                RemoveAt(index);
-                return true;
-            }
-            return false;
+            return this.value.Remove(value);
         }
 
         public void RemoveAt(int index)
         {
-            if (array == null || index > array.Length || index + array.Length < 0)
-            {
-                throw new ArgumentOutOfRangeException("index", index, "Wrong argument array of \"index\" !");
-            }
-            else
-            {
-                if (index < 0)
-                    index += array.Length;
-                var oldarray = array;
-                this.array = new IUnit[oldarray.Length - 1];
-                for (var i = 0; i < index; i++)
-                {
-                    array[i] = oldarray[i];
-                }
-                for (var i = index; i < oldarray.Length - 1; i++)
-                {
-                    array[i] = oldarray[i + 1];
-                }
-            }
+            value.RemoveAt(index);
         }
 
         public void CopyTo(IUnit[] array, int index)
         {
-            array.CopyTo(array, index);
+            value.CopyTo(array, index);
         }
 
-        IEnumerator<IUnit> IEnumerable<IUnit>.GetEnumerator()
+        public IEnumerator GetEnumerator()
         {
-            return (IEnumerator<IUnit>)array.GetEnumerator();
+            return value.GetEnumerator();
         }
 
-        public override IEnumerator GetEnumerator()
+        public bool ToBool()
         {
-            return array.GetEnumerator();
+            return value != null;
         }
 
-        public override JArray ToArray()
+        public int ToInt()
+        {
+            return 0;
+        }
+
+        public double ToFloat()
+        {
+            return 0.0;
+        }
+
+        public JObject ToObject()
+        {
+            return null;
+        }
+
+        public JArray ToArray()
         {
             return this;
         }
 
-        private IUnit[] array = null;
-    }
+        public void CopyTo(Array array, int index)
+        {
+            for(int i = index; i < value.Count; ++i)
+            {
+                array.SetValue(value[i], new int[] { i - index });
+            }
+        }
 
+        IEnumerator<IUnit> IEnumerable<IUnit>.GetEnumerator()
+        {
+            return value.GetEnumerator();
+        }
+
+        private IList<IUnit> value = new List<IUnit>();
+    }
 }

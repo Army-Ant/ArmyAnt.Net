@@ -2,8 +2,21 @@
 namespace ArmyAnt.Utility.Json
 {
 	public class JNumber : IUnit
-	{
-		public JNumber(byte v = 0)
+    {
+        public static IUnit isThis(string text)
+        {
+            try
+            {
+                return new JNumber(Convert.ToDouble(text));
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
+
+        }
+
+        public JNumber(byte v = 0)
 			: base()
 		{
 			value = v;
@@ -58,8 +71,8 @@ namespace ArmyAnt.Utility.Json
 			get
 			{
 				if (value - Convert.ToInt64(value) == 0)
-					return Convert.ToInt64(value).ToString;
-				return value.ToString;
+					return Convert.ToInt64(value).ToString();
+				return value.ToString();
 			}
 			set
 			{
@@ -82,6 +95,11 @@ namespace ArmyAnt.Utility.Json
 			}
 		}
 
+        public override string ToString()
+        {
+            return null;
+        }
+
         public bool ToBool()
         {
             return value == 0.0;
@@ -92,9 +110,9 @@ namespace ArmyAnt.Utility.Json
             return (int)value;
         }
 
-        public float ToFloat()
+        public double ToFloat()
         {
-            return (float)value;
+            return value;
         }
 
         public JObject ToObject()

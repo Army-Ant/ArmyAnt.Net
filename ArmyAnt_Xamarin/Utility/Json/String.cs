@@ -2,8 +2,20 @@
 namespace ArmyAnt.Utility.Json
 {
 	public class JString : IUnit
-	{
-		public JString(string v = "")
+    {
+        public static IUnit isThis(string text)
+        {
+            var realValue = text.Trim().Trim(new char[] { '\r', '\n' });
+            if (realValue[realValue.Length - 1] != '\0')
+                realValue += '\0';
+            if (realValue[0] != '"' || realValue[realValue.Length - 2] != '"')
+            {
+                return null;
+            }
+            return new JString(realValue.Remove(realValue.Length - 2).Remove(0, 1));
+        }
+
+        public JString(string v = "")
 			: base()
 		{
 			value = v;
@@ -44,7 +56,7 @@ namespace ArmyAnt.Utility.Json
             return value == "";
         }
 
-        public float ToFloat()
+        public double ToFloat()
         {
             return 0.0;
         }
@@ -57,7 +69,12 @@ namespace ArmyAnt.Utility.Json
         public JObject ToObject()
         {
             return null;
-		}
+        }
+
+        public override string ToString()
+        {
+            return value;
+        }
 
         private string value = "";
     }

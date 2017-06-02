@@ -20,8 +20,8 @@ namespace ArmyAnt
             }
             bool ToBool();
             int ToInt();
-            float ToFloat();
-            string ToString { get; }
+            double ToFloat();
+            string ToString();
 
             JObject ToObject();
             JArray ToArray();
@@ -31,8 +31,27 @@ namespace ArmyAnt
 		{
 			public static IUnit Create(string value)
 			{
-				// TODO: redisign it
-				return null;
+                IUnit ret = null;
+                ret = Undefined.isThis(value);
+                if (ret != null)
+                    return ret;
+                ret = JNull.isThis(value);
+                if (ret != null)
+                    return ret;
+                ret = JBoolean.isThis(value);
+                if (ret != null)
+                    return ret;
+                ret = JNumber.isThis(value);
+                if (ret != null)
+                    return ret;
+                ret = JString.isThis(value);
+                if (ret != null)
+                    return ret;
+                ret = JObject.isThis(value);
+                if (ret != null)
+                    return ret;
+                ret = JArray.isThis(value);
+                return ret;
 			}
 
             internal static string[] CutByComma(string value)

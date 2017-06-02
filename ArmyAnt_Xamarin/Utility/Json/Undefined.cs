@@ -5,6 +5,11 @@ namespace ArmyAnt.Utility.Json
 {
 	public class Undefined : IUnit
 	{
+        public static IUnit isThis(string text)
+        {
+            return text.Trim().Trim(new char[] { '\r', '\n' }) == "undefined" ? new Undefined() : null;
+        }
+
 		public virtual string String
 		{
 			get
@@ -35,7 +40,7 @@ namespace ArmyAnt.Utility.Json
             return 0;
         }
 
-        public float ToFloat()
+        public double ToFloat()
         {
             return 0.0;
         }
@@ -50,6 +55,10 @@ namespace ArmyAnt.Utility.Json
             return null;
 		}
 
+        public override string ToString()
+        {
+            return null;
+        }
     }
 
 }

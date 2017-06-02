@@ -6,9 +6,23 @@ using System.Linq;
 namespace ArmyAnt.Utility.Json
 {
 	
-	public class JObject : IUnit, ICollection, IDictionary<string, IUnit>
-	{
-		public JObject(Dictionary<string, IUnit> v = null)
+	public class JObject : IJsonCollection, IDictionary<string, IUnit>
+    {
+        public static IUnit isThis(string text)
+        {
+            try
+            {
+                var ret = new JObject();
+                ret.String = text;
+                return ret;
+            }
+            catch (JException)
+            {
+                return null;
+            }
+        }
+
+        public JObject(Dictionary<string, IUnit> v = null)
 			: base()
 		{
 			if (v != null)
@@ -43,19 +57,14 @@ namespace ArmyAnt.Utility.Json
                 realValue = realValue.Trim().Trim(new char[] { '\r', '\n' });
                 this.value = new Dictionary<string, IUnit>();
                 if (realValue != "")
-                    try
+                {
+                    var res = Helper.CutByComma(realValue);
+                    for (int i = 0; i < res.Length; i++)
                     {
-                        var res = Helper.CutByComma(realValue);
-                        for (int i = 0; i < res.Length; i++)
-                        {
-                            var ins = CutKeyValue(res[i]);
-                            this.value[ins.Key] = Helper.Create(ins.Value);
-                        }
+                        var ins = CutKeyValue(res[i]);
+                        this.value[ins.Key] = Helper.Create(ins.Value);
                     }
-                    catch (JException e)
-                    {
-
-                    }
+                }
             }
         }
 		public virtual EType Type
@@ -102,7 +111,7 @@ namespace ArmyAnt.Utility.Json
 		{
 			get
 			{
-				return value.Count;
+				return Count;
 			}
 		}
 
@@ -110,7 +119,7 @@ namespace ArmyAnt.Utility.Json
 		{
 			get
 			{
-				return this.value;
+				return value;
 			}
 		}
 
@@ -237,14 +246,9 @@ namespace ArmyAnt.Utility.Json
 			CopyTo((KeyValuePair<string, IUnit>[])array, index);
 		}
 
-		virtual IEnumerator IEnumerable.GetEnumerator()
+		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return value.GetEnumerator();
-		}
-
-		virtual IEnumerator<IUnit> IEnumerable<IUnit>.GetEnumerator()
-		{
-			return value.Values.GetEnumerator();
 		}
 
         public virtual bool ToBool()
@@ -257,7 +261,7 @@ namespace ArmyAnt.Utility.Json
             return 0;
         }
 
-        public virtual float ToFloat()
+        public virtual double ToFloat()
         {
             return 0.0;
         }
@@ -272,7 +276,17 @@ namespace ArmyAnt.Utility.Json
             return null;
         }
 
-        private Dictionary<string, IUnit> value = new Dictionary<string, IUnit>();
+        public override string ToString()
+        {
+            return null;
+        }
+
+        IEnumerator<IUnit> IEnumerable<IUnit>.GetEnumerator()
+        {
+            return Values.GetEnumerator();
+        }
+
+        protected Dictionary<string, IUnit> value = new Dictionary<string, IUnit>();
 	}
 
 }
