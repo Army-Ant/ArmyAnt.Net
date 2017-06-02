@@ -7,50 +7,9 @@
 *.userosscache
 *.sln.docstates
 
-# User-specific files (MonoDevelop/Xamarin Studio)
-*.userprefs
+# Roslyn cache directories
+*.ide/
 
-# Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-bld/
-[Bb]in/
-[Oo]bj/
-
-# Visual Studio 2015 cache/options directory
-.vs/
-# Uncomment if you have tasks that create the project's static files in wwwroot
-#wwwroot/
-
-# MSTest test Results
-[Tt]est[Rr]esult*/
-[Bb]uild[Ll]og.*
-
-# NUNIT
-*.VisualState.xml
-TestResult.xml
-
-# Build Results of an ATL Project
-[Dd]ebugPS/
-[Rr]eleasePS/
-dlldata.c
-
-# DNX
-project.lock.json
-artifacts/
-
-*_i.c
-*_p.c
-*_i.h
-*.ilk
-*.meta
-*.obj
-*.pch
-*.pdb
 *.pgc
 *.pgd
 *.rsp
@@ -60,7 +19,6 @@ artifacts/
 *.tlh
 *.tmp
 *.tmp_proj
-*.log
 *.vspscc
 *.vssscc
 .builds
@@ -68,14 +26,9 @@ artifacts/
 *.svclog
 *.scc
 
-# Chutzpah Test files
-_Chutzpah*
-
 # Visual C++ cache files
-ipch/
 *.aps
 *.ncb
-*.opendb
 *.opensdf
 *.sdf
 *.cachefile
@@ -84,10 +37,6 @@ ipch/
 *.psess
 *.vsp
 *.vspx
-*.sap
-
-# TFS 2012 Local Workspace
-$tf/
 
 # Guidance Automation Toolkit
 *.gpState
@@ -97,7 +46,7 @@ _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
 
-# JustCode is a .NET coding add-in
+# JustCode is a .NET coding addin-in
 .JustCode
 
 # TeamCity is a build add-in
@@ -109,7 +58,6 @@ _TeamCity*
 # NCrunch
 _NCrunch_*
 .*crunch*.local.xml
-nCrunchTemp_*
 
 # MightyMoose
 *.mm.*
@@ -131,9 +79,6 @@ DocProject/Help/*.hhp
 DocProject/Help/Html2
 DocProject/Help/html
 
-# Click-Once directory
-publish/
-
 # Publish Web Output
 *.[Pp]ublish.xml
 *.azurePubxml
@@ -148,35 +93,21 @@ publish/
 **/packages/*
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
-# Uncomment if necessary however generally it will be regenerated when needed
+# If using the old MSBuild-Integrated Package Restore, uncomment this:
 #!**/packages/repositories.config
-# NuGet v3's project.json files produces more ignoreable files
-*.nuget.props
-*.nuget.targets
 
-# Microsoft Azure Build Output
+# Windows Azure Build Output
 csx/
 *.build.csdef
 
-# Microsoft Azure Emulator
-ecf/
-rcf/
-
-# Microsoft Azure ApplicationInsights config file
-ApplicationInsights.config
-
 # Windows Store app package directory
 AppPackages/
-BundleArtifacts/
-
-# Visual Studio cache files
-# files ending in .cache can be ignored
-*.[Cc]ache
-# but keep track of directories ending in .cache
-!*.[Cc]ache/
 
 # Others
+sql/
+*.Cache
 ClientBin/
+[Ss]tyle[Cc]op.*
 ~$*
 *~
 *.dbmdl
@@ -184,7 +115,6 @@ ClientBin/
 *.pfx
 *.publishsettings
 node_modules/
-orleans.codegen.cs
 
 # RIA/Silverlight projects
 Generated_Code/
@@ -209,28 +139,63 @@ UpgradeLog*.htm
 # Microsoft Fakes
 FakesAssemblies/
 
-# GhostDoc plugin setting file
-*.GhostDoc.xml
+# =========================
+# Operating System Files
+# =========================
 
-# Node.js Tools for Visual Studio
-.ntvs_analysis.dat
+# OSX
+# =========================
 
-# Visual Studio 6 build log
-*.plg
+.DS_Store
+.AppleDouble
+.LSOverride
 
-# Visual Studio 6 workspace options file
-*.opt
+# Thumbnails
+._*
 
-# Visual Studio LightSwitch build output
-**/*.HTMLClient/GeneratedArtifacts
-**/*.DesktopClient/GeneratedArtifacts
-**/*.DesktopClient/ModelManifest.xml
-**/*.Server/GeneratedArtifacts
-**/*.Server/ModelManifest.xml
-_Pvt_Extensions
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
 
-# Paket dependency manager
-.paket/paket.exe
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
-# FAKE - F# Make
-.fake/
+# Windows
+# =========================
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Build logs
+*.log
+*.tlog
+
+# VC++ debug and intellisence info files
+*.pdb
+*.idb
+*.exp
+*.ipdb
+*.db
+*.lastbuildstate
+*.obj
+*.iobj
+*.opendb
+*.ipch
+*.db-shm
+*.db-wal
+
+# Microsoft Visual Studio temp files
+.vs
+
+# output directory
+/bin
+
+*.xdc
