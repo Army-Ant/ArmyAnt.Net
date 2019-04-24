@@ -200,3 +200,5 @@ $RECYCLE.BIN/
 
 /packages
 *.xdc
+
+/obj

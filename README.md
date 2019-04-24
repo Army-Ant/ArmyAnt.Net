@@ -1,2 +1,2 @@
 # ArmyAnt.Net
-A Visual Studio library for C#, F# and VB.Net
+A .Net Stardard class library for C#
