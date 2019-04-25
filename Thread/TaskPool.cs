@@ -4,20 +4,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace ArmyAnt.Thread {
-
-    public delegate void ResolveTask(string eventName, params string[] param);
-
-    public interface ITaskQueue {
-        void OnTask(string eventName, params string[] param);
+    public interface ITaskQueue<T> {
+        void OnTask<Input>(T _event, params Input[] data);
     }
 
-    public class TaskPool {
-        public long AddTaskQueue(ITaskQueue queue) {
-            return AddTaskQueue(queue.OnTask);
-        }
-
-        public long AddTaskQueue(ResolveTask onTask) {
-            if(onTask == null) {
+    public class TaskPool<T> {
+        public long AddTaskQueue(ITaskQueue<T> queue) {
+            if(queue == null) {
                 throw new ArgumentNullException();
             }
             long index = 0;
@@ -26,7 +19,7 @@ namespace ArmyAnt.Thread {
                 }
                 var end = new System.Threading.CancellationTokenSource();
                 var info = new TaskQueueInfo() {
-                    onTask = onTask,
+                    queue = queue,
                     end = end,
                     task = Task.Run(() => { }, end.Token),
                 };
@@ -63,7 +56,7 @@ namespace ArmyAnt.Thread {
             }
         }
 
-        public bool EnqueueTaskTo(long index, string eventName, params string[] param) {
+        public bool EnqueueTaskTo<Input>(long index, T _event, params Input[] param) {
             if(IsTaskQueueExist(index)) {
                 lock(pool) {
                     var queue = pool[index];
@@ -72,7 +65,7 @@ namespace ArmyAnt.Thread {
                             throw new System.ObjectDisposedException("The task queue has been stopped, cannot enqueue any more before it was resumed", default(System.Exception));
                         }
                         queue.task = queue.task.ContinueWith((lastTask) => {
-                            queue.onTask(eventName, param);
+                            queue.queue.OnTask(_event, param);
                         }, queue.end.Token);
                     }
                 }
@@ -103,7 +96,7 @@ namespace ArmyAnt.Thread {
         }
 
         private struct TaskQueueInfo {
-            public ResolveTask onTask;
+            public ITaskQueue<T> queue;
             public Task task;
             public System.Threading.CancellationTokenSource end;
         }
