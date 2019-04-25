@@ -9,9 +9,9 @@ namespace ArmyAnt.Network {
         protected const int BUFFER_SIZE = 8192;
 
         /// <summary> 收到来自服务器的消息时的回调 </summary>
-        public Callback.OnWebsocketClientReceived OnWebsocketClientReceived { get; set; }
+        public OnWebsocketClientReceived OnWebsocketClientReceived { get; set; }
         /// <summary> 连接断开时的回调 </summary>
-        public Callback.OnTcpClientDisonnected OnTcpClientDisonnected { get; set; }
+        public OnTcpClientDisonnected OnTcpClientDisonnected { get; set; }
         /// <summary> 服务器Uri </summary>
         public Uri ServerUri { get; private set; }
         /// <summary> 是否已连接 </summary>
@@ -85,21 +85,24 @@ namespace ArmyAnt.Network {
         /// async (内部) 接收数据的线程/任务函数体
         /// </summary>
         private async Task ReceiveAsync() {
-            while(!cancellationTokenSource.Token.IsCancellationRequested) {
-                System.Threading.Thread.Sleep(1);
-                while(Connected) {
-                    System.Threading.Thread.Sleep(1);
-                    var buffer = new byte[BUFFER_SIZE]; // TODO: 优化内存使用
-                    var result = await self.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
-                    if(result.MessageType == WebSocketMessageType.Close) {
-                        Stop();
-                        break;
-                    } else if(result.Count > 0) {
-                        OnWebsocketClientReceived(buffer);
-                    }
+            if(Connected) {
+                var buffer = new byte[BUFFER_SIZE]; // TODO: 优化内存使用
+                var result = await self.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
+                if(result.MessageType == WebSocketMessageType.Close) {
+                    cancellationTokenSource.Cancel();
+                    await self.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                    self.Dispose();
+                } else if(result.Count > 0) {
+                    OnWebsocketClientReceived(buffer);
                 }
+            } else {
+                System.Threading.Thread.Sleep(1);
             }
-            OnTcpClientDisonnected();
+            if(cancellationTokenSource.Token.IsCancellationRequested) {
+                OnTcpClientDisonnected();
+            } else {
+                await ReceiveAsync();
+            }
         }
 
         /// <summary> Websocket 客户端对象 </summary>

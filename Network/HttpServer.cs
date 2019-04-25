@@ -39,21 +39,18 @@ namespace ArmyAnt.Network {
         /// </summary>
         /// <param name="prefixes">可用URI集合, 调整URI以决定服务器的端口号及可访问方式, 前缀请使用 http(无SSL)或 https(有SSL), 并以"/"结尾</param>
         public void Start(params string[] prefixes) {
-            mutex.Lock();
             if(prefixes == null || prefixes.Length == 0) {
-                mutex.Unlock();
                 throw new ArgumentNullException();
             }
+            mutex.Lock();
             if(self != null) {
-                mutex.Unlock();
                 throw new NetworkException(ExceptionType.ServerHasNotStopped);
             }
-            var listener = new HttpListener();
+            self = new HttpListener();
             foreach(var i in prefixes) {
-                listener.Prefixes.Add(i);
+                self.Prefixes.Add(i);
             }
-            listener.Start();
-            self = listener;
+            self.Start();
             mutex.Unlock();
             acceptTask = AcceptAsync();
         }
@@ -67,7 +64,6 @@ namespace ArmyAnt.Network {
                 i.Value.cancellationToken.Cancel();
                 i.Value.client?.WebSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "Server is closing", default)?.Wait();
                 i.Value.receiveTask?.Wait();
-                i.Value.websocketTask?.Wait();
                 i.Value.client?.WebSocket?.Dispose();
             }
             clients.Clear();
@@ -129,19 +125,19 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 有新WebSocket客户端接入时的回调
         /// </summary>
-        public Callback.OnTcpServerConnected OnTcpServerConnected { get; set; }
+        public OnTcpServerConnected OnTcpServerConnected { get; set; }
         /// <summary>
         /// 有WebSocket客户端关闭连接, 断开连接或被踢掉时的回调
         /// </summary>
-        public Callback.OnTcpServerDisonnected OnTcpServerDisonnected { get; set; }
+        public OnTcpServerDisonnected OnTcpServerDisonnected { get; set; }
         /// <summary>
         /// 收到来自WebSocket客户端的数据时回调
         /// </summary>
-        public Callback.OnTcpServerReceived OnTcpServerReceived { get; set; }
+        public OnTcpServerReceived OnTcpServerReceived { get; set; }
         /// <summary>
         /// 收到HTTP请求 (非Websocket) 时的回调, 需在此回调中拼接response回复体并自行调用Close
         /// </summary>
-        public Callback.OnHttpServerReceived OnHttpServerReceived { get; set; }
+        public OnHttpServerReceived OnHttpServerReceived { get; set; }
 
         /// <summary>
         /// (内部) async 踢掉指定的客户端
@@ -156,10 +152,9 @@ namespace ArmyAnt.Network {
             clients.Remove(index);
             websocket.cancellationToken.Cancel();
             await websocket.client?.WebSocket?.CloseAsync(reason, info, default);
-            if(wait) {
-                websocket.receiveTask?.Wait();
+            if(wait && websocket.receiveTask != null) {
+                await websocket.receiveTask;
             }
-            websocket.websocketTask?.Wait();
             websocket.client?.WebSocket?.Dispose();
         }
 
@@ -167,28 +162,26 @@ namespace ArmyAnt.Network {
         /// (内部) async 接受HTTP请求的任务主体函数
         /// </summary>
         private async Task AcceptAsync() {
-            while(self != null) {
-                System.Threading.Thread.Sleep(1);
-                var context = await self.GetContextAsync();
-
-                if(context.Request.IsWebSocketRequest) {
-                    var newClient = new ClientInfo() {
-                        client = null,
-                        cancellationToken = new CancellationTokenSource(),
-                        websocketTask = null,
-                        receiveTask = null,
-                    };
-                    var index = 0;
-                    mutex.Lock();
-                    while(clients.ContainsKey(++index)) {
-                    }
-                    clients.Add(index, newClient);
-                    mutex.Unlock();
-                    newClient.websocketTask = WebSocketAcceptAsync(index, newClient, context);
-                } else {
-                    OnHttpServerReceived(context.Request, context.Response, context.User);
+            var context = await self.GetContextAsync();
+            if(context.Request.IsWebSocketRequest) {
+                var newClient = new ClientInfo() {
+                    client = null,
+                    cancellationToken = new CancellationTokenSource(),
+                    receiveTask = null,
+                };
+                var index = 0;
+                mutex.Lock();
+                while(clients.ContainsKey(++index)) {
                 }
-                await CheckToRemoveObsoleteConnections();
+                clients.Add(index, newClient);
+                mutex.Unlock();
+                newClient.receiveTask = WebSocketAcceptAsync(index, newClient, context);
+            } else {
+                OnHttpServerReceived(context.Request, context.Response, context.User);
+            }
+            await CheckToRemoveObsoleteConnections();
+            if(self != null) {
+                await AcceptAsync();
             }
         }
 
@@ -204,7 +197,7 @@ namespace ArmyAnt.Network {
             if(!OnTcpServerConnected(index, context.Request.RemoteEndPoint)) {
                 await KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false);
             } else {
-                client.receiveTask = ReceiveAsync(index, client, context);
+                await ReceiveAsync(index, client, context);
             }
 
         }
@@ -216,20 +209,22 @@ namespace ArmyAnt.Network {
         /// <param name="client"> 客户端信息 </param>
         /// <param name="context"> Http监听者上下文 </param>
         private async Task ReceiveAsync(int index, ClientInfo client, HttpListenerContext context) {
-            while(client.client.WebSocket == null || client.client.WebSocket.State != WebSocketState.Connecting) {
-                if(client.mutex != null) {
-                    var buffer = new byte[BUFFER_SIZE];
-                    var result = await client.client.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), client.cancellationToken.Token);
-                    if(result.MessageType == WebSocketMessageType.Close) {
-                        break;
-                    } else if(result.Count > 0) {
-                        OnTcpServerReceived(index, buffer);
-                    }
+            if(client.mutex != null) {
+                var buffer = new byte[BUFFER_SIZE];
+                var result = await client.client.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), client.cancellationToken.Token);
+                if(result.MessageType == WebSocketMessageType.Close) {
+                    await KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false);
+                    OnTcpServerDisonnected(index);
+                } else if(result.Count > 0) {
+                    OnTcpServerReceived(index, buffer);
                 }
-                System.Threading.Thread.Sleep(1);
             }
-            await CheckToRemoveObsoleteConnections();
-            OnTcpServerDisonnected(index);
+            if(client.client.WebSocket == null || client.client.WebSocket.State != WebSocketState.Connecting) {
+                await ReceiveAsync(index, client, context);
+            } else {
+                await CheckToRemoveObsoleteConnections();
+                OnTcpServerDisonnected(index);
+            }
         }
 
         /// <summary>
@@ -255,12 +250,10 @@ namespace ArmyAnt.Network {
             public HttpListenerWebSocketContext client;
             /// <summary> Websocket客户端终止任务控制符, 在断开与该客户端的连接时设定以取消收发任务 </summary>
             public CancellationTokenSource cancellationToken;
-            /// <summary> Websocket连接任务句柄 </summary>
-            public Task websocketTask;
             /// <summary> 客户端接收消息任务句柄 </summary>
             public Task receiveTask;
             /// <summary> 资源锁 </summary>
-            public readonly Thread.SimpleLock mutex = new Thread.SimpleLock(1, 1);
+            public readonly Thread.SimpleLock mutex = new Thread.SimpleLock();
         }
 
         /// <summary> HTTP服务器连接体 </summary>
@@ -268,7 +261,7 @@ namespace ArmyAnt.Network {
         /// <summary> 服务器接收HTTP任务句柄 </summary>
         private Task acceptTask;
         /// <summary> 服务器资源锁 </summary>
-        private readonly Thread.SimpleLock mutex = new Thread.SimpleLock(1, 1);
+        private readonly Thread.SimpleLock mutex = new Thread.SimpleLock();
         /// <summary> Websocket客户端列表 </summary>
         private readonly Dictionary<int, ClientInfo> clients = new Dictionary<int, ClientInfo>();
     }

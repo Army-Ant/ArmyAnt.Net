@@ -104,15 +104,15 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 有新客户端接入时的回调
         /// </summary>
-        public Callback.OnTcpServerConnected OnTcpServerConnected { get; set; }
+        public OnTcpServerConnected OnTcpServerConnected { get; set; }
         /// <summary>
         /// 有客户端关闭连接, 断开连接或被踢掉时的回调
         /// </summary>
-        public Callback.OnTcpServerDisonnected OnTcpServerDisonnected { get; set; }
+        public OnTcpServerDisonnected OnTcpServerDisonnected { get; set; }
         /// <summary>
         /// 收到来自客户端的数据时回调
         /// </summary>
-        public Callback.OnTcpServerReceived OnTcpServerReceived { get; set; }
+        public OnTcpServerReceived OnTcpServerReceived { get; set; }
 
         /// <summary>
         /// (内部) async 踢掉指定的客户端
@@ -133,29 +133,28 @@ namespace ArmyAnt.Network {
         /// (内部) async 接受连接的任务主体函数
         /// </summary>
         private async Task AcceptAsync() {
-            while(self != null) {
-                System.Threading.Thread.Sleep(1);
-                var client = self.AcceptTcpClient();
-                var index = 0;
-                mutex.Lock();
-                while(clients.ContainsKey(++index)) {
-                }
+            var client = await self.AcceptTcpClientAsync();
+            var index = 0;
+            mutex.Lock();
+            while(clients.ContainsKey(++index)) {
+            }
+            if(!OnTcpServerConnected(index, client.Client.RemoteEndPoint as IPEndPoint)) {
                 mutex.Unlock();
-                if(!OnTcpServerConnected(index, client.Client.RemoteEndPoint as IPEndPoint)) {
-                    client.Close();
-                } else {
-                    mutex.Lock();
-                    client.ReceiveBufferSize = BUFFER_SIZE;
-                    var newClient = new ClientInfo() {
-                        client = client,
-                        cancellationToken = new CancellationTokenSource(),
-                        receiveTask = null,
-                    };
-                    clients.Add(index, newClient);
-                    mutex.Unlock();
-                    newClient.receiveTask = ReceiveAsync(index, newClient);
-                }
-                await CheckToRemoveObsoleteConnections();
+                client.Close();
+            } else {
+                client.ReceiveBufferSize = BUFFER_SIZE;
+                var newClient = new ClientInfo() {
+                    client = client,
+                    cancellationToken = new CancellationTokenSource(),
+                    receiveTask = null,
+                };
+                clients.Add(index, newClient);
+                mutex.Unlock();
+                newClient.receiveTask = ReceiveAsync(index, newClient);
+            }
+            await CheckToRemoveObsoleteConnections();
+            if(self != null) {
+                await AcceptAsync();
             }
         }
 
@@ -165,25 +164,25 @@ namespace ArmyAnt.Network {
         /// <param name="index"> 客户端序列号 </param>
         /// <param name="client"> 客户端信息 </param>
         private async Task ReceiveAsync(int index, ClientInfo client) {
-            while(client.client.Connected) {
-                if(client.mutex != null) {
-                    var buffer = new byte[client.client.ReceiveBufferSize]; // TODO: 优化内存使用
-                    try {
-                        var result = await client.client.GetStream().ReadAsync(buffer, 0, client.client.ReceiveBufferSize, client.cancellationToken.Token);
-                        if(result > 0) {
-                            OnTcpServerReceived(index, buffer);
-                        } else {
-                            await KickOut(index, client, false);
-                            break;
-                        }
-                    } catch(SocketException) {
-                        // TODO: Resolve socket exceptions
+            if(client.mutex != null) {
+                var buffer = new byte[client.client.ReceiveBufferSize]; // TODO: 优化内存使用
+                try {
+                    var result = await client.client.GetStream().ReadAsync(buffer, 0, client.client.ReceiveBufferSize, client.cancellationToken.Token);
+                    if(result > 0) {
+                        OnTcpServerReceived(index, buffer);
+                    } else {
+                        await KickOut(index, client, false);
                     }
+                } catch(SocketException) {
+                    // TODO: Resolve socket exceptions
                 }
-                System.Threading.Thread.Sleep(1);
             }
-            await CheckToRemoveObsoleteConnections();
-            OnTcpServerDisonnected(index);
+            if(client.client.Connected) {
+                await ReceiveAsync(index, client);
+            } else {
+                await CheckToRemoveObsoleteConnections();
+                OnTcpServerDisonnected(index);
+            }
         }
 
         /// <summary>
@@ -212,7 +211,7 @@ namespace ArmyAnt.Network {
             /// <summary> 客户端接收消息任务句柄 </summary>
             public Task receiveTask;
             /// <summary> 资源锁 </summary>
-            public readonly Thread.SimpleLock mutex = new Thread.SimpleLock(1, 1);
+            public readonly Thread.SimpleLock mutex = new Thread.SimpleLock();
         }
 
         /// <summary> 服务器连接体 </summary>
@@ -220,7 +219,7 @@ namespace ArmyAnt.Network {
         /// <summary> 服务器接收连接任务句柄 </summary>
         private Task acceptTask;
         /// <summary> 服务器资源锁 </summary>
-        private readonly Thread.SimpleLock mutex = new Thread.SimpleLock(1, 1);
+        private readonly Thread.SimpleLock mutex = new Thread.SimpleLock();
         /// <summary> 客户端列表 </summary>
         private readonly Dictionary<int, ClientInfo> clients = new Dictionary<int, ClientInfo>();
     }

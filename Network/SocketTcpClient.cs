@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace ArmyAnt.Network {
     public class SocketTcpClient : TcpClient, ITcpNetworkClient, ISocketNetworkClient {
         /// <summary> 收到来自服务器的消息时的回调 </summary>
-        public Callback.OnIPClientReceived OnClientReceived { get; set; }
+        public OnIPClientReceived OnClientReceived { get; set; }
         /// <summary> 连接断开时的回调 </summary>
-        public Callback.OnTcpClientDisonnected OnTcpClientDisonnected { get; set; }
+        public OnTcpClientDisonnected OnTcpClientDisonnected { get; set; }
         /// <summary> 本机网络位置 </summary>
         public IPEndPoint IPEndPoint => Client.LocalEndPoint as IPEndPoint;
         /// <summary> 服务器网络位置 </summary>
@@ -23,8 +23,7 @@ namespace ArmyAnt.Network {
         /// 参见 <seealso cref="TcpClient()"/>
         /// </summary>
         public SocketTcpClient() : base() {
-            receiveTask = new System.Threading.Thread(ReceiveAsync);
-            receiveTask.Start();
+            receiveTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
@@ -33,8 +32,7 @@ namespace ArmyAnt.Network {
         /// </summary>
         /// <param name="family"></param>
         public SocketTcpClient(AddressFamily family) : base(family) {
-            receiveTask = new System.Threading.Thread(ReceiveAsync);
-            receiveTask.Start();
+            receiveTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
@@ -44,8 +42,7 @@ namespace ArmyAnt.Network {
         /// <param name="hostname"> 要绑定的主机名, 等价于对应的IP地址 </param>
         /// <param name="port"> 要绑定的端口号 </param>
         public SocketTcpClient(string hostname, ushort port) : base(hostname, port) {
-            receiveTask = new System.Threading.Thread(ReceiveAsync);
-            receiveTask.Start();
+            receiveTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
@@ -54,15 +51,14 @@ namespace ArmyAnt.Network {
         /// </summary>
         /// <param name="local"> 要绑定的本机网络位置 </param>
         public SocketTcpClient(IPEndPoint local) : base(local) {
-            receiveTask = new System.Threading.Thread(ReceiveAsync);
-            receiveTask.Start();
+            receiveTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
         /// (析构) 关掉接收消息的线程
         /// </summary>
         ~SocketTcpClient() {
-            receiveTask.Join();
+            // receiveTask.Wait(); // 这个等待无关紧要, 倒是有可能阻塞垃圾回收器, 所以删除
             Stop();
         }
 
@@ -99,29 +95,30 @@ namespace ArmyAnt.Network {
         /// (内部) 接收数据的线程/任务函数体
         /// </summary>
         private void ReceiveAsync() {
-            while(!taskEnd) {
-                System.Threading.Thread.Sleep(1);
-                while(Connected) {
-                    System.Threading.Thread.Sleep(1);
-                    var buffer = new byte[Client.ReceiveBufferSize]; // TODO: 优化内存使用
-                    try {
-                        var result = GetStream().Read(buffer, 0, Client.ReceiveBufferSize);
-                        if(result > 0) {
-                            OnClientReceived(ServerIPEndPoint, buffer);
-                        } else {
-                            Stop();
-                            break;
-                        }
-                    } catch(SocketException) {
-                        // TODO: Resolve exceptions
+            if(Connected) {
+                var buffer = new byte[Client.ReceiveBufferSize]; // TODO: 优化内存使用
+                try {
+                    var result = GetStream().Read(buffer, 0, Client.ReceiveBufferSize);
+                    if(result > 0) {
+                        OnClientReceived(ServerIPEndPoint, buffer);
+                    } else {
+                        Stop();
                     }
+                } catch(SocketException) {
+                    // TODO: Resolve exceptions
                 }
+            } else {
+                System.Threading.Thread.Sleep(1);
             }
-            OnTcpClientDisonnected();
+            if(taskEnd) {
+                OnTcpClientDisonnected();
+            } else {
+                ReceiveAsync();
+            }
         }
 
         /// <summary> 收发消息任务句柄 </summary>
-        private readonly System.Threading.Thread receiveTask;
+        private readonly Task receiveTask;
         private bool taskEnd = false;
     }
 }

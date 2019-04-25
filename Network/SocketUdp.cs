@@ -48,19 +48,24 @@ namespace ArmyAnt.Network {
             udp.MulticastLoopback = multicast;
             self = udp;
             mutex.Unlock();
-            receiveTask = new Task(ReceiveAsync);
-            receiveTask.Start();
+            receiveTask = ReceiveAsync();
         }
 
         /// <summary>
         /// 停止UDP监听和消息接收
         /// </summary>
         public void Stop() {
+            Stop(true).Wait();
+        }
+
+        private async Task Stop(bool wait) {
             mutex.Lock();
             self.Close();
             self.Dispose();
             self = null;
-            receiveTask?.Wait();
+            if(wait && receiveTask != null) {
+                await receiveTask;
+            }
             receiveTask = null;
             mutex.Unlock();
         }
@@ -137,24 +142,25 @@ namespace ArmyAnt.Network {
         }
 
         /// <summary> 收到数据时回调 </summary>
-        public Callback.OnIPClientReceived OnClientReceived { get; set; }
+        public OnIPClientReceived OnClientReceived { get; set; }
 
         /// <summary>
         /// (内部) 接收数据的线程/任务函数体
         /// </summary>
-        private void ReceiveAsync() {
-            while(self != null) {
-                System.Threading.Thread.Sleep(1);
-                var buffer = new byte[self.Client.ReceiveBufferSize]; // TODO: 优化内存使用
-                IPEndPoint remote = new IPEndPoint(IPEndPoint.Address, IPEndPoint.Port);
-                try {
-                    var result = self.Receive(ref remote);
-                    if(result.Length > 0) {
-                        OnClientReceived(remote, result);
-                    }
-                } catch(SocketException) {
-                    // TODO: Resolve socket exceptions
+        private async Task ReceiveAsync() {
+            var buffer = new byte[self.Client.ReceiveBufferSize]; // TODO: 优化内存使用
+            try {
+                var result = await self.ReceiveAsync();
+                if(result.Buffer.Length > 0) {
+                    OnClientReceived(result.RemoteEndPoint, result.Buffer);
+                } else {
+                    await Stop(false);
                 }
+            } catch(SocketException) {
+                // TODO: Resolve socket exceptions
+            }
+            if(self != null) {
+                await ReceiveAsync();
             }
         }
 
@@ -163,6 +169,6 @@ namespace ArmyAnt.Network {
         /// <summary> 收发消息任务句柄 </summary>
         private Task receiveTask;
         /// <summary> 资源锁 </summary>
-        private readonly Thread.SimpleLock mutex = new Thread.SimpleLock(1, 1);
+        private readonly Thread.SimpleLock mutex = new Thread.SimpleLock();
     }
 }

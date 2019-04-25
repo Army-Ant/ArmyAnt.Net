@@ -3,49 +3,47 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace ArmyAnt.Network {
-    public static class Callback {
-        /// <summary>
-        /// TCP有新客户端接入时的回调
-        /// </summary>
-        /// <param name="index"> 客户端的序列号 </param>
-        /// <param name="point"> 客户端的终端位置 </param>
-        /// <returns></returns>
-        public delegate bool OnTcpServerConnected(int index, IPEndPoint point);
-        /// <summary>
-        /// TCP有客户端关闭连接, 断开连接或被踢掉时的回调
-        /// </summary>
-        /// <param name="index"> 客户端的序列号 </param>
-        public delegate void OnTcpServerDisonnected(int index);
-        /// <summary>
-        /// TCP收到来自客户端的数据时回调
-        /// </summary>
-        /// <param name="index"> 客户端的序列号 </param>
-        /// <param name="data"> 消息正文 </param>
-        public delegate void OnTcpServerReceived(int index, byte[] data);
-        /// <summary>
-        /// HTTP收到请求时的回调
-        /// </summary>
-        /// <param name="request"> 请求体 </param>
-        /// <param name="response"> 回复体, 需在此回调中拼接回复体并自行调用Close </param>
-        /// <param name="user"> 请求者信息 </param>
-        public delegate void OnHttpServerReceived(HttpListenerRequest request, HttpListenerResponse response, System.Security.Principal.IPrincipal user);
-        /// <summary>
-        /// Socket 客户端收到数据时回调
-        /// </summary>
-        /// <param name="ep"> 远程计算机的网络地址 </param>
-        /// <param name="data"> 消息正文 </param>
-        public delegate void OnIPClientReceived(IPEndPoint ep, byte[] data);
-        /// <summary>
-        /// TCP客户端连接断开时的回调
-        /// </summary>
-        /// <param name="ep"> 服务器的网络地址 </param>
-        public delegate void OnTcpClientDisonnected();
-        /// <summary>
-        /// WebSocket 客户端收到数据时回调
-        /// </summary>
-        /// <param name="data"> 消息正文 </param>
-        public delegate void OnWebsocketClientReceived(byte[] data);
-    }
+    /// <summary>
+    /// TCP有新客户端接入时的回调
+    /// </summary>
+    /// <param name="index"> 客户端的序列号 </param>
+    /// <param name="point"> 客户端的终端位置 </param>
+    /// <returns></returns>
+    public delegate bool OnTcpServerConnected(int index, IPEndPoint point);
+    /// <summary>
+    /// TCP有客户端关闭连接, 断开连接或被踢掉时的回调
+    /// </summary>
+    /// <param name="index"> 客户端的序列号 </param>
+    public delegate void OnTcpServerDisonnected(int index);
+    /// <summary>
+    /// TCP收到来自客户端的数据时回调
+    /// </summary>
+    /// <param name="index"> 客户端的序列号 </param>
+    /// <param name="data"> 消息正文 </param>
+    public delegate void OnTcpServerReceived(int index, byte[] data);
+    /// <summary>
+    /// HTTP收到请求时的回调
+    /// </summary>
+    /// <param name="request"> 请求体 </param>
+    /// <param name="response"> 回复体, 需在此回调中拼接回复体并自行调用Close </param>
+    /// <param name="user"> 请求者信息 </param>
+    public delegate void OnHttpServerReceived(HttpListenerRequest request, HttpListenerResponse response, System.Security.Principal.IPrincipal user);
+    /// <summary>
+    /// Socket 客户端收到数据时回调
+    /// </summary>
+    /// <param name="ep"> 远程计算机的网络地址 </param>
+    /// <param name="data"> 消息正文 </param>
+    public delegate void OnIPClientReceived(IPEndPoint ep, byte[] data);
+    /// <summary>
+    /// TCP客户端连接断开时的回调
+    /// </summary>
+    /// <param name="ep"> 服务器的网络地址 </param>
+    public delegate void OnTcpClientDisonnected();
+    /// <summary>
+    /// WebSocket 客户端收到数据时回调
+    /// </summary>
+    /// <param name="data"> 消息正文 </param>
+    public delegate void OnWebsocketClientReceived(byte[] data);
 
     public interface INetwork {
         /// <summary>
@@ -81,7 +79,7 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 收到数据时回调
         /// </summary>
-        Callback.OnIPClientReceived OnClientReceived { get; set; }
+        OnIPClientReceived OnClientReceived { get; set; }
     }
 
     public interface ITcpNetworkServer : INetworkServer {
@@ -105,15 +103,15 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 有新客户端接入时的回调
         /// </summary>
-        Callback.OnTcpServerConnected OnTcpServerConnected { get; set; }
+        OnTcpServerConnected OnTcpServerConnected { get; set; }
         /// <summary>
         /// 有客户端关闭连接, 断开连接或被踢掉时的回调
         /// </summary>
-        Callback.OnTcpServerDisonnected OnTcpServerDisonnected { get; set; }
+        OnTcpServerDisonnected OnTcpServerDisonnected { get; set; }
         /// <summary>
         /// 收到来自客户端的数据时回调
         /// </summary>
-        Callback.OnTcpServerReceived OnTcpServerReceived { get; set; }
+        OnTcpServerReceived OnTcpServerReceived { get; set; }
     }
 
     public interface ITcpNetworkClient : INetwork {
@@ -137,7 +135,7 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 连接断开时的回调
         /// </summary>
-        Callback.OnTcpClientDisonnected OnTcpClientDisonnected { get; set; }
+        OnTcpClientDisonnected OnTcpClientDisonnected { get; set; }
     }
 
     public interface IUdpNetwork : ISocketNetworkClient, INetworkServer, IPSocket {

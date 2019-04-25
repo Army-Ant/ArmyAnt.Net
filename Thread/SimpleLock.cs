@@ -8,8 +8,8 @@ namespace ArmyAnt.Thread {
     /// 用于排查可能的死锁问题的简单锁封装
     /// </summary>
     public class SimpleLock {
-        public SimpleLock(int initialCount, int maximumCount, bool consoleLog = false) {
-            handle = new System.Threading.Semaphore(initialCount, maximumCount);
+        public SimpleLock(bool consoleLog = false) {
+            handle = new System.Threading.Semaphore(1, 1);
             id = Convert.ToUInt32(new Random().Next(0, 999999));
             ConsoleLog = consoleLog;
             if(ConsoleLog) {
