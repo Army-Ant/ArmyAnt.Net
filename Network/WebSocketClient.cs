@@ -52,8 +52,11 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// <para> 断开连接 </para>
         /// </summary>
-        public void Stop() {
-            Stop(WebSocketCloseStatus.NormalClosure).Wait();
+        public void Stop(bool nowait) {
+            var waiter = Stop(WebSocketCloseStatus.NormalClosure);
+            if(!nowait) {
+                waiter.Wait();
+            }
         }
 
         /// <summary>
@@ -67,6 +70,8 @@ namespace ArmyAnt.Network {
             await receiveTask;
             self.Dispose();
         }
+
+        public Task WaitingTask => receiveTask;
 
         /// <summary>
         /// 发送消息到已连接的Websocket服务器

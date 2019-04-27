@@ -23,7 +23,7 @@ namespace ArmyAnt.Network {
         /// 参见 <seealso cref="TcpClient()"/>
         /// </summary>
         public SocketTcpClient() : base() {
-            receiveTask = Task.Run(ReceiveAsync);
+            WaitingTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace ArmyAnt.Network {
         /// </summary>
         /// <param name="family"></param>
         public SocketTcpClient(AddressFamily family) : base(family) {
-            receiveTask = Task.Run(ReceiveAsync);
+            WaitingTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace ArmyAnt.Network {
         /// <param name="hostname"> 要绑定的主机名, 等价于对应的IP地址 </param>
         /// <param name="port"> 要绑定的端口号 </param>
         public SocketTcpClient(string hostname, ushort port) : base(hostname, port) {
-            receiveTask = Task.Run(ReceiveAsync);
+            WaitingTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace ArmyAnt.Network {
         /// </summary>
         /// <param name="local"> 要绑定的本机网络位置 </param>
         public SocketTcpClient(IPEndPoint local) : base(local) {
-            receiveTask = Task.Run(ReceiveAsync);
+            WaitingTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
@@ -72,11 +72,16 @@ namespace ArmyAnt.Network {
         /// <para> 断开连接, 断开后本对象所有资源将被释放 </para>
         /// <seealso cref="TcpClient.Close()"/>
         /// </summary>
-        public void Stop() {
+        public void Stop(bool nowait = false) {
             taskEnd = true;
             Close();
             Dispose();
+            if(!nowait) {
+                WaitingTask.Wait();
+            }
         }
+
+        public Task WaitingTask { get; }
 
         /// <summary>
         /// async 异步连接到指定服务器, 这是对标准库 ConnectAsync 重载参数的一个补充.
@@ -117,8 +122,6 @@ namespace ArmyAnt.Network {
             }
         }
 
-        /// <summary> 收发消息任务句柄 </summary>
-        private readonly Task receiveTask;
         private bool taskEnd = false;
     }
 }

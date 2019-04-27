@@ -4,12 +4,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace ArmyAnt.Thread {
-    public interface ITaskQueue<T> {
-        void OnTask<Input>(T _event, params Input[] data);
-    }
-
     public class TaskPool<T> {
-        public long AddTaskQueue(ITaskQueue<T> queue) {
+        public interface ITaskQueue {
+            void OnTask<Input>(T _event, params Input[] data);
+        }
+
+        public long AddTaskQueue(ITaskQueue queue) {
             if(queue == null) {
                 throw new ArgumentNullException();
             }
@@ -47,12 +47,6 @@ namespace ArmyAnt.Thread {
         public bool IsTaskQueueExist(long index) {
             lock(pool) {
                 return pool.ContainsKey(index);
-            }
-        }
-
-        public bool IsTaskQueueStopped(long index) {
-            lock(pool) {
-                return pool[index].end.IsCancellationRequested;
             }
         }
 
@@ -95,8 +89,28 @@ namespace ArmyAnt.Thread {
             }
         }
 
+        public bool IsTaskQueueStopped(long index) {
+            lock(pool) {
+                return pool[index].end.IsCancellationRequested;
+            }
+        }
+
+        public Task GetTask(long index) => pool[index].task;
+        public Task[] GetAllTasks() {
+            lock(pool) {
+                var ret = new Task[pool.Count];
+                int index = 0;
+                foreach(var i in pool) {
+                    ret[index++] = i.Value.task;
+                }
+                return ret;
+            }
+        }
+
+        public ITaskQueue GetQueue(long index) => pool[index].queue;
+
         private struct TaskQueueInfo {
-            public ITaskQueue<T> queue;
+            public ITaskQueue queue;
             public Task task;
             public System.Threading.CancellationTokenSource end;
         }

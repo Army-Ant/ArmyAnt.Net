@@ -54,21 +54,19 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 停止UDP监听和消息接收
         /// </summary>
-        public void Stop() {
-            Stop(true).Wait();
-        }
-
-        private async Task Stop(bool wait) {
+        public void Stop(bool nowait = false) {
             mutex.Lock();
             self.Close();
             self.Dispose();
             self = null;
-            if(wait && receiveTask != null) {
-                await receiveTask;
+            if(!nowait && receiveTask != null) {
+                receiveTask.Wait();
             }
             receiveTask = null;
             mutex.Unlock();
         }
+
+        public Task WaitingTask => receiveTask;
 
         /// <summary>
         /// async 向某客户端发送消息
@@ -154,7 +152,7 @@ namespace ArmyAnt.Network {
                 if(result.Buffer.Length > 0) {
                     OnClientReceived(result.RemoteEndPoint, result.Buffer);
                 } else {
-                    await Stop(false);
+                    Stop(false);
                 }
             } catch(SocketException) {
                 // TODO: Resolve socket exceptions

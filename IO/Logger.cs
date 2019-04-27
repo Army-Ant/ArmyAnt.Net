@@ -93,6 +93,7 @@ namespace ArmyAnt.IO {
         /// <param name="strings"> 要写入的后续对象, 所有这些对象会被转化为字符串写入 </param>
         public void WriteLine(object content, params object[] strings) {
             Write(content, strings);
+            Write(Environment.NewLine);
         }
 
         /// <summary>

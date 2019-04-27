@@ -45,6 +45,14 @@ namespace ArmyAnt.Network {
     /// <param name="data"> 消息正文 </param>
     public delegate void OnWebsocketClientReceived(byte[] data);
 
+    public enum NetworkType {
+        Unknown,
+        Tcp,
+        Http,
+        Websocket,
+        Udp,
+    }
+
     public interface INetwork {
         /// <summary>
         /// 网络是否在运行
@@ -58,7 +66,7 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 关闭网络, 断开所有连接
         /// </summary>
-        void Stop();
+        void Stop(bool nowait = false);
     }
 
     public interface INetworkServer : INetwork {

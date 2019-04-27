@@ -58,20 +58,41 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 停止HTTP服务器, 断开所有WebSocket客户端连接
         /// </summary>
-        public void Stop() {
+        public void Stop(bool nowait = false) {
             mutex.Lock();
             foreach(var i in clients) {
                 i.Value.cancellationToken.Cancel();
                 i.Value.client?.WebSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "Server is closing", default)?.Wait();
-                i.Value.receiveTask?.Wait();
                 i.Value.client?.WebSocket?.Dispose();
+                if(!nowait) {
+                    i.Value.receiveTask?.Wait();
+                }
             }
             clients.Clear();
-            self.Stop();
+            try {
+                self.Stop();
+            } catch(ObjectDisposedException) {
+
+            }
             self = null;
-            acceptTask?.Wait();
+            if(!nowait) {
+                acceptTask?.Wait();
+            }
             acceptTask = null;
             mutex.Unlock();
+        }
+
+
+        public (Task main, List<Task> clients) WaitingTask {
+            get {
+                var ret = new List<Task>();
+                mutex.Lock();
+                foreach(var i in clients) {
+                    ret.Add(i.Value.receiveTask);
+                }
+                mutex.Unlock();
+                return (acceptTask, ret);
+            }
         }
 
         /// <summary>

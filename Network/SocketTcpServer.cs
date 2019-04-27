@@ -54,19 +54,35 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 停止TCP服务器, 断开所有客户端连接
         /// </summary>
-        public void Stop() {
+        public void Stop(bool nowait = false) {
             mutex.Lock();
             foreach(var i in clients) {
                 i.Value.cancellationToken.Cancel();
                 i.Value.client.Close();
-                i.Value.receiveTask.Wait();
+                if(!nowait) {
+                    i.Value.receiveTask.Wait();
+                }
             }
             clients.Clear();
             self.Stop();
             self = null;
-            acceptTask?.Wait();
+            if(!nowait) {
+                acceptTask?.Wait();
+            }
             acceptTask = null;
             mutex.Unlock();
+        }
+
+        public (Task main, List<Task> clients) WaitingTask {
+            get {
+                var ret = new List<Task>();
+                mutex.Lock();
+                foreach(var i in clients) {
+                    ret.Add(i.Value.receiveTask);
+                }
+                mutex.Unlock();
+                return (acceptTask, ret);
+            }
         }
 
         /// <summary>
