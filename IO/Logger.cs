@@ -54,7 +54,9 @@ namespace ArmyAnt.IO {
             var levelBytes = Encoding.Default.GetBytes("[ " + level.ToString() + " ] ");
             lock(streams) {
                 foreach(var i in streams) {
-                    if(i.stream != null && i.stream.CanWrite && i.level <= level) {
+                    if(i.stream == null || !i.stream.CanWrite) {
+                        streams.Remove(i);
+                    }else if(i.level <= level) {
                         if(i.stream.CanSeek) {
                             i.stream.Seek(0, SeekOrigin.End);
                         }
@@ -64,8 +66,6 @@ namespace ArmyAnt.IO {
                         i.stream.Write(levelBytes, 0, levelBytes.Length);
                         i.stream.Write(buffer, offset, count);
                         i.stream.Flush();
-                    } else {
-                        streams.Remove(i);
                     }
                 }
             }
@@ -108,8 +108,8 @@ namespace ArmyAnt.IO {
         /// 写入一个字符串并自动换行
         /// </summary>
         /// <param name="content"></param>
-        public void WriteLine(LogLevel level, string content) {
-            Write(level, content + Environment.NewLine);
+        public void WriteLine(LogLevel level, string content, params object[] strings) {
+            WriteLine(DefaultWritingEncoding, level, content, strings);
         }
 
         /// <summary>
@@ -117,8 +117,22 @@ namespace ArmyAnt.IO {
         /// </summary>
         /// <param name="content"> 要写入的第一个对象, 必须至少有一个 </param>
         /// <param name="strings"> 要写入的后续对象, 所有这些对象会被转化为字符串写入 </param>
-        public void WriteLine(LogLevel level, string content, params object[] strings) {
-            Write(level, content, strings, Environment.NewLine);
+        public void WriteLine(Encoding encodeType, LogLevel level, string content, params object[] strings) {
+            if(strings == null || strings.Length == 0) {
+                return;
+            }
+            var str = new StringBuilder(content);
+            foreach(var i in strings) {
+                if(i is Array arr) {
+                    foreach(var arr_i in arr) {
+                        str.Append(arr_i.ToString());
+                    }
+                } else {
+                    str.Append(i.ToString());
+                }
+            }
+            str.Append(Environment.NewLine);
+            Write(level, str.ToString(), encodeType);
         }
 
         /// <summary>
@@ -168,7 +182,7 @@ namespace ArmyAnt.IO {
         public static FileStream CreateLoggerFileStream(params string[] filepath) {
             var str = new StringBuilder();
             for(var i = 0; i < filepath.Length; ++i) {
-                str.Append(i);
+                str.Append(filepath[i]);
                 if(i != filepath.Length - 1) {
                     str.Append(Path.DirectorySeparatorChar);
                 }

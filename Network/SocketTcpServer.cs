@@ -106,7 +106,7 @@ namespace ArmyAnt.Network {
             var client = clients[index];
             mutex.Unlock();
             client.mutex.Lock();
-            await client.client.GetStream().WriteAsync(content, 0, content.Length, client.cancellationToken.Token);
+            await Task.Run(() => { client.client.Client.Send(content); });
             client.mutex.Unlock();
         }
 
@@ -182,15 +182,22 @@ namespace ArmyAnt.Network {
         private async Task ReceiveAsync(int index, ClientInfo client) {
             if(client.mutex != null) {
                 var buffer = new byte[client.client.ReceiveBufferSize]; // TODO: 优化内存使用
-                try {
-                    var result = await client.client.GetStream().ReadAsync(buffer, 0, client.client.ReceiveBufferSize, client.cancellationToken.Token);
-                    if(result > 0) {
-                        OnTcpServerReceived(index, buffer);
-                    } else {
-                        await KickOut(index, client, false);
+                var result = await Task.Run(() => {
+                    try {
+                        return client.client.Client.Receive(buffer);
+                    } catch(SocketException e) {
+                        switch(e.ErrorCode) {
+                            case 10054: // 远程主机强迫关闭了一个现有的连接
+                                return 0;
+                            default:
+                                throw e;
+                        }
                     }
-                } catch(SocketException) {
-                    // TODO: Resolve socket exceptions
+                });
+                if(result > 0) {
+                    OnTcpServerReceived(index, buffer);
+                } else {
+                    await KickOut(index, client, false);
                 }
             }
             if(client.client.Connected) {

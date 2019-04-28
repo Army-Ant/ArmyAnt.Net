@@ -94,7 +94,7 @@ namespace ArmyAnt.Network {
         /// 发送消息到已连接的服务器
         /// </summary>
         /// <param name="content"> 消息正文 </param>
-        public void Send(byte[] content) => GetStream().Write(content, 0, content.Length);
+        public void Send(byte[] content) => Client.Send(content);
 
         /// <summary>
         /// (内部) 接收数据的线程/任务函数体
@@ -103,14 +103,20 @@ namespace ArmyAnt.Network {
             if(Connected) {
                 var buffer = new byte[Client.ReceiveBufferSize]; // TODO: 优化内存使用
                 try {
-                    var result = GetStream().Read(buffer, 0, Client.ReceiveBufferSize);
+                    var result = Client.Receive(buffer);
                     if(result > 0) {
                         OnClientReceived(ServerIPEndPoint, buffer);
                     } else {
                         Stop();
                     }
-                } catch(SocketException) {
-                    // TODO: Resolve exceptions
+                } catch(SocketException e) {
+                    switch(e.ErrorCode) {
+                        case 10054: // 远程主机强迫关闭了一个现有的连接
+                            Stop(true);
+                            break;
+                        default:
+                            throw e;
+                    }
                 }
             } else {
                 System.Threading.Thread.Sleep(1);
