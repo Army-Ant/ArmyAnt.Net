@@ -8,6 +8,7 @@
     <Company>ArmyAnt Org</Company>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageId>com.armyant.net</PackageId>
+    <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

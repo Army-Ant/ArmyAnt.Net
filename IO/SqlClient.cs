@@ -3,16 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace ArmyAnt.IO {
-    public abstract class ISqlClient {
-        public abstract bool Connect(string serverHost);
-        public abstract bool Connect(string serverAddress, string port);
+    public abstract class SqlClient {
+        public abstract bool Connect(string connString);
         public abstract void Disconnect();
-        public abstract bool IsConnection();
-        public abstract uint GetDatabaseCount();
+        public abstract bool IsConnection { get; }
         public abstract string[] GetDatabaseList();
-
-        public abstract long GetTablesCount();
-        public abstract long GetViewsCount();
         public abstract string[] GetTableNameList();
         public abstract string[] GetViewNameList();
 
@@ -96,9 +91,5 @@ namespace ArmyAnt.IO {
 
         public abstract SqlTable Query(string sql);
         public abstract long Update(string sql);
-        // Call 'excute' to execute multi-result sql, if the result param was run, the sql will still be executed
-        // 调用驱动的execute执行可以返回多个结果集的SQL语句, 如果传入的result参数不可用, sql语句仍将被执行, 且结果仍将返回结果集个数. 
-        // 只有sql语句执行失败才会返回负数. 如果执行update语句, 则不会返回任何结果, 但返回值会返回影响的行数 (同update)
-        public abstract SqlTable[] Execute(string sql);
     }
 }
