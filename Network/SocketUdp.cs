@@ -146,7 +146,6 @@ namespace ArmyAnt.Network {
         /// (内部) 接收数据的线程/任务函数体
         /// </summary>
         private async Task ReceiveAsync() {
-            var buffer = new byte[self.Client.ReceiveBufferSize]; // TODO: 优化内存使用
             try {
                 var result = await self.ReceiveAsync();
                 if(result.Buffer.Length > 0) {

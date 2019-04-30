@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -105,7 +106,7 @@ namespace ArmyAnt.Network {
                 try {
                     var result = Client.Receive(buffer);
                     if(result > 0) {
-                        OnClientReceived(ServerIPEndPoint, buffer);
+                        OnClientReceived(ServerIPEndPoint, buffer.Take(result).ToArray());
                     } else {
                         Stop();
                     }

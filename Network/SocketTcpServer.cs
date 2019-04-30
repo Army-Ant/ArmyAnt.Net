@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -106,7 +107,7 @@ namespace ArmyAnt.Network {
             var client = clients[index];
             mutex.Unlock();
             client.mutex.Lock();
-            await Task.Run(() => { client.client.Client.Send(content); });
+            await client.client.GetStream().WriteAsync(content, 0, content.Length);
             client.mutex.Unlock();
         }
 
@@ -195,7 +196,7 @@ namespace ArmyAnt.Network {
                     }
                 });
                 if(result > 0) {
-                    OnTcpServerReceived(index, buffer);
+                    OnTcpServerReceived(index, buffer.Take(result).ToArray());
                 } else {
                     await KickOut(index, client, false);
                 }

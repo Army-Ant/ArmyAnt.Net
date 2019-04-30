@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -237,7 +238,7 @@ namespace ArmyAnt.Network {
                     await KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false);
                     OnTcpServerDisonnected(index);
                 } else if(result.Count > 0) {
-                    OnTcpServerReceived(index, buffer);
+                    OnTcpServerReceived(index, buffer.Take(result.Count).ToArray());
                 }
             }
             if(client.client.WebSocket == null || client.client.WebSocket.State != WebSocketState.Connecting) {

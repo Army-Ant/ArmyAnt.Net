@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.WebSockets;
 using System.Threading;
@@ -98,7 +99,7 @@ namespace ArmyAnt.Network {
                     await self.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
                     self.Dispose();
                 } else if(result.Count > 0) {
-                    OnWebsocketClientReceived(buffer);
+                    OnWebsocketClientReceived(buffer.Take(result.Count).ToArray());
                 }
             } else {
                 System.Threading.Thread.Sleep(1);
