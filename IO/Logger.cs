@@ -24,7 +24,7 @@ namespace ArmyAnt.IO {
         }
 
         /// <summary> 能否写, 恒返回true </summary>
-        public override bool CanWrite => true;
+        public sealed override bool CanWrite => true;
         public Encoding DefaultWritingEncoding { get; set; }
 
         public Logger(bool withConsole = true, LogLevel consoleLevel = LogLevel.Info, bool consoleTimestamp = false) {
