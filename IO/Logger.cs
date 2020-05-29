@@ -29,7 +29,10 @@ namespace ArmyAnt.IO {
 
         public Logger(bool withConsole = true, LogLevel consoleLevel = LogLevel.Info, bool consoleTimestamp = false) {
             DefaultWritingEncoding = Encoding.UTF8;
-            if(withConsole) {
+            if(withConsole)
+            {
+                Console.InputEncoding = DefaultWritingEncoding;
+                Console.OutputEncoding = DefaultWritingEncoding;
                 var console = Console.OpenStandardOutput();
                 if(console != null && console.CanWrite) {
                     AddStream(console, consoleLevel, consoleTimestamp);

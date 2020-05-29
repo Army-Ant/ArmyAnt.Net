@@ -145,19 +145,26 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// (内部) 接收数据的线程/任务函数体
         /// </summary>
-        private async Task ReceiveAsync() {
-            try {
-                var result = await self.ReceiveAsync();
-                if(result.Buffer.Length > 0) {
-                    OnClientReceived(result.RemoteEndPoint, result.Buffer);
-                } else {
-                    Stop(false);
+        private async Task ReceiveAsync()
+        {
+            while (self != null)
+            {
+                try
+                {
+                    var result = await self.ReceiveAsync();
+                    if (result.Buffer.Length > 0)
+                    {
+                        OnClientReceived(result.RemoteEndPoint, result.Buffer);
+                    }
+                    else
+                    {
+                        Stop(false);
+                    }
                 }
-            } catch(SocketException) {
-                // TODO: Resolve socket exceptions
-            }
-            if(self != null) {
-                await ReceiveAsync();
+                catch (SocketException)
+                {
+                    // TODO: Resolve socket exceptions
+                }
             }
         }
 

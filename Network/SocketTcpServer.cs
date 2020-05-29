@@ -180,33 +180,42 @@ namespace ArmyAnt.Network {
         /// </summary>
         /// <param name="index"> 客户端序列号 </param>
         /// <param name="client"> 客户端信息 </param>
-        private async Task ReceiveAsync(int index, ClientInfo client) {
-            if(client.mutex != null) {
-                var buffer = new byte[client.client.ReceiveBufferSize]; // TODO: 优化内存使用
-                var result = await Task.Run(() => {
-                    try {
-                        return client.client.Client.Receive(buffer);
-                    } catch(SocketException e) {
-                        switch(e.ErrorCode) {
-                            case 10054: // 远程主机强迫关闭了一个现有的连接
-                                return 0;
-                            default:
-                                throw e;
+        private async Task ReceiveAsync(int index, ClientInfo client)
+        {
+            while (client.client.Connected)
+            {
+                if (client.mutex != null)
+                {
+                    var buffer = new byte[client.client.ReceiveBufferSize]; // TODO: 优化内存使用
+                    var result = await Task.Run(() =>
+                    {
+                        try
+                        {
+                            return client.client.Client.Receive(buffer);
                         }
+                        catch (SocketException e)
+                        {
+                            switch (e.ErrorCode)
+                            {
+                                case 10054: // 远程主机强迫关闭了一个现有的连接
+                                    return 0;
+                                default:
+                                    throw e;
+                            }
+                        }
+                    });
+                    if (result > 0)
+                    {
+                        OnTcpServerReceived(index, buffer.Take(result).ToArray());
                     }
-                });
-                if(result > 0) {
-                    OnTcpServerReceived(index, buffer.Take(result).ToArray());
-                } else {
-                    await KickOut(index, client, false);
+                    else
+                    {
+                        await KickOut(index, client, false);
+                    }
                 }
             }
-            if(client.client.Connected) {
-                await ReceiveAsync(index, client);
-            } else {
-                await CheckToRemoveObsoleteConnections();
-                OnTcpServerDisonnected(index);
-            }
+            await CheckToRemoveObsoleteConnections();
+            OnTcpServerDisonnected(index);
         }
 
         /// <summary>

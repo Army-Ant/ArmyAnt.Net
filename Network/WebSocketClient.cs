@@ -90,24 +90,30 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// async (内部) 接收数据的线程/任务函数体
         /// </summary>
-        private async Task ReceiveAsync() {
-            if(Connected) {
-                var buffer = new byte[BUFFER_SIZE]; // TODO: 优化内存使用
-                var result = await self.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
-                if(result.MessageType == WebSocketMessageType.Close) {
-                    cancellationTokenSource.Cancel();
-                    await self.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
-                    self.Dispose();
-                } else if(result.Count > 0) {
-                    OnWebsocketClientReceived(buffer.Take(result.Count).ToArray());
+        private async Task ReceiveAsync()
+        {
+            while (!cancellationTokenSource.Token.IsCancellationRequested)
+            {
+                if (Connected)
+                {
+                    var buffer = new byte[BUFFER_SIZE]; // TODO: 优化内存使用
+                    var result = await self.ReceiveAsync(new ArraySegment<byte>(buffer), cancellationTokenSource.Token);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        cancellationTokenSource.Cancel();
+                        await self.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+                        self.Dispose();
+                    }
+                    else if (result.Count > 0)
+                    {
+                        OnWebsocketClientReceived(buffer.Take(result.Count).ToArray());
+                    }
                 }
-            } else {
-                System.Threading.Thread.Sleep(1);
-            }
-            if(cancellationTokenSource.Token.IsCancellationRequested) {
+                else
+                {
+                    System.Threading.Thread.Sleep(1);
+                }
                 OnTcpClientDisonnected();
-            } else {
-                await ReceiveAsync();
             }
         }
 

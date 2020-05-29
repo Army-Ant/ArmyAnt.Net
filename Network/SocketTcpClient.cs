@@ -6,8 +6,10 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ArmyAnt.Network {
-    public class SocketTcpClient : TcpClient, ITcpNetworkClient, ISocketNetworkClient {
+namespace ArmyAnt.Network
+{
+    public class SocketTcpClient : TcpClient, ITcpNetworkClient, ISocketNetworkClient
+    {
         /// <summary> 收到来自服务器的消息时的回调 </summary>
         public OnIPClientReceived OnClientReceived { get; set; }
         /// <summary> 连接断开时的回调 </summary>
@@ -23,7 +25,8 @@ namespace ArmyAnt.Network {
         /// 构造空TCP客户端对象.
         /// 参见 <seealso cref="TcpClient()"/>
         /// </summary>
-        public SocketTcpClient() : base() {
+        public SocketTcpClient() : base()
+        {
             WaitingTask = Task.Run(ReceiveAsync);
         }
 
@@ -32,7 +35,8 @@ namespace ArmyAnt.Network {
         /// 参见 <seealso cref="TcpClient(AddressFamily)"/>
         /// </summary>
         /// <param name="family"></param>
-        public SocketTcpClient(AddressFamily family) : base(family) {
+        public SocketTcpClient(AddressFamily family) : base(family)
+        {
             WaitingTask = Task.Run(ReceiveAsync);
         }
 
@@ -42,7 +46,8 @@ namespace ArmyAnt.Network {
         /// </summary>
         /// <param name="hostname"> 要绑定的主机名, 等价于对应的IP地址 </param>
         /// <param name="port"> 要绑定的端口号 </param>
-        public SocketTcpClient(string hostname, ushort port) : base(hostname, port) {
+        public SocketTcpClient(string hostname, ushort port) : base(hostname, port)
+        {
             WaitingTask = Task.Run(ReceiveAsync);
         }
 
@@ -51,14 +56,16 @@ namespace ArmyAnt.Network {
         /// 参见 <seealso cref="TcpClient(IPEndPoint)"/>
         /// </summary>
         /// <param name="local"> 要绑定的本机网络位置 </param>
-        public SocketTcpClient(IPEndPoint local) : base(local) {
+        public SocketTcpClient(IPEndPoint local) : base(local)
+        {
             WaitingTask = Task.Run(ReceiveAsync);
         }
 
         /// <summary>
         /// (析构) 关掉接收消息的线程
         /// </summary>
-        ~SocketTcpClient() {
+        ~SocketTcpClient()
+        {
             // receiveTask.Wait(); // 这个等待无关紧要, 倒是有可能阻塞垃圾回收器, 所以删除
             Stop();
         }
@@ -73,11 +80,13 @@ namespace ArmyAnt.Network {
         /// <para> 断开连接, 断开后本对象所有资源将被释放 </para>
         /// <seealso cref="TcpClient.Close()"/>
         /// </summary>
-        public void Stop(bool nowait = false) {
+        public void Stop(bool nowait = false)
+        {
             taskEnd = true;
             Close();
             Dispose();
-            if(!nowait) {
+            if (!nowait)
+            {
                 WaitingTask.Wait();
             }
         }
@@ -100,33 +109,47 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// (内部) 接收数据的线程/任务函数体
         /// </summary>
-        private void ReceiveAsync() {
-            if(Connected) {
-                var buffer = new byte[Client.ReceiveBufferSize]; // TODO: 优化内存使用
-                try {
-                    var result = Client.Receive(buffer);
-                    if(result > 0) {
-                        OnClientReceived(ServerIPEndPoint, buffer.Take(result).ToArray());
-                    } else {
-                        Stop();
+        private void ReceiveAsync()
+        {
+            while (true)
+            {
+                if (Connected)
+                {
+                    var buffer = new byte[Client.ReceiveBufferSize]; // TODO: 优化内存使用
+                    try
+                    {
+                        var result = Client.Receive(buffer);
+                        if (result > 0)
+                        {
+                            OnClientReceived(ServerIPEndPoint, buffer.Take(result).ToArray());
+                        }
+                        else
+                        {
+                            Stop();
+                        }
                     }
-                } catch(SocketException e) {
-                    switch(e.ErrorCode) {
-                        case 10054: // 远程主机强迫关闭了一个现有的连接
-                            Stop(true);
-                            break;
-                        default:
-                            throw e;
+                    catch (SocketException e)
+                    {
+                        switch (e.ErrorCode)
+                        {
+                            case 10054: // 远程主机强迫关闭了一个现有的连接
+                                Stop(true);
+                                break;
+                            default:
+                                throw e;
+                        }
                     }
                 }
-            } else {
-                System.Threading.Thread.Sleep(1);
+                else
+                {
+                    System.Threading.Thread.Sleep(1);
+                }
+                if (taskEnd)
+                {
+                    break;
+                }
             }
-            if(taskEnd) {
-                OnTcpClientDisonnected();
-            } else {
-                ReceiveAsync();
-            }
+            OnTcpClientDisonnected();
         }
 
         private bool taskEnd = false;
