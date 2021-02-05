@@ -21,7 +21,7 @@ namespace ArmyAnt.Network {
         public bool IsStarting => self != null;
 
         /// <summary> 子协议名 </summary>
-        public string SubProtocol { get; set; }
+        public string SubProtocol { get; set; } = null;
         /// <summary> 服务器的可用URI集合 </summary>
         public HttpListenerPrefixCollection Prefixes => self?.Prefixes;
 
@@ -61,13 +61,18 @@ namespace ArmyAnt.Network {
         /// </summary>
         public void Stop(bool nowait = false) {
             mutex.Lock();
+            var waitingList = new List<Task>() { };
             foreach(var i in clients) {
                 i.Value.cancellationToken.Cancel();
                 i.Value.client?.WebSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, "Server is closing", default)?.Wait();
                 i.Value.client?.WebSocket?.Dispose();
-                if(!nowait) {
-                    i.Value.receiveTask?.Wait();
+                if(!nowait && i.Value.receiveTask != null) {
+                    waitingList.Add(i.Value.receiveTask);
                 }
+            }
+            if (waitingList.Count > 0)
+            {
+                Task.WaitAll(waitingList.ToArray());
             }
             clients.Clear();
             try {
@@ -76,10 +81,10 @@ namespace ArmyAnt.Network {
 
             }
             self = null;
-            if(!nowait) {
-                acceptTask?.Wait();
+            if(!nowait && acceptTask != null) {
+                acceptTask.Wait();
+                acceptTask = null;
             }
-            acceptTask = null;
             mutex.Unlock();
         }
 
@@ -170,6 +175,7 @@ namespace ArmyAnt.Network {
         /// <param name="wait"> 是否等待, 内部清理废弃客户端建议不要等待 </param>
         /// <returns></returns>
         private async Task KickOut(int index, WebSocketCloseStatus reason, string info, bool wait = true) {
+            mutex.Lock();
             if (clients.ContainsKey(index))
             {
                 var websocket = clients[index];
@@ -182,6 +188,7 @@ namespace ArmyAnt.Network {
                 }
                 websocket.client?.WebSocket?.Dispose();
             }
+            mutex.Unlock();
         }
 
         /// <summary>
@@ -190,7 +197,16 @@ namespace ArmyAnt.Network {
         private async Task AcceptAsync() {
             while (self != null)
             {
-                var context = await self.GetContextAsync();
+                HttpListenerContext context = null;
+                try
+                {
+                    context = await self.GetContextAsync();
+                }
+                catch (Exception e)
+                {
+                    await CheckToRemoveObsoleteConnections();
+                    return;
+                }
                 if (context.Request.IsWebSocketRequest)
                 {
                     var newClient = new ClientInfo()
@@ -228,34 +244,27 @@ namespace ArmyAnt.Network {
             client.client = websocketContext;
             if (!OnTcpServerConnected(index, context.Request.RemoteEndPoint))
             {
-                await KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false);
+                await KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server kick you out", false);
             }
             else
             {
-                await Task.WhenAll(ReceiveAsync(index, client, context), Task.Run(()=> {
-                    while (true)
-                    {
-                        Console.WriteLine(client.client.WebSocket.State.ToString());
-                        if (client.client.WebSocket == null || client.client.WebSocket.State == WebSocketState.Aborted || client.client.WebSocket.State == WebSocketState.Closed)
-                        {
-                            client.cancellationToken.Token.Register(() =>
-                            {
-                                KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false).Wait();
-                                client.client.WebSocket.Abort();
-                                Console.WriteLine("called");
-                            });
-                            client.cancellationToken.Cancel();
-                            break;
-                        }
-                }
-                    while (true)
-                    {
-                        Console.WriteLine(client.client.WebSocket.State.ToString());
-                    }
-                }));
-
+                await Task.WhenAll(ReceiveAsync(index, client, context), Task.Run(()=> { WebSocketWatching(index, websocketContext, client.cancellationToken); }));
             }
+        }
 
+        private void WebSocketWatching(int index, HttpListenerWebSocketContext client, CancellationTokenSource cancellationToken)
+        {
+            while (true)
+            {
+                System.Diagnostics.Debug.WriteLine("client: " + index + ", state: " + client.WebSocket.State.ToString());
+                if (client.WebSocket == null || client.WebSocket.State == WebSocketState.Aborted || client.WebSocket.State == WebSocketState.Closed)
+                {
+                    KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false).Wait();
+                    client.WebSocket.Abort();
+                    System.Diagnostics.Debug.WriteLine("[before break] client: " + index + ", state: " + client.WebSocket.State.ToString());
+                    break;
+                }
+            }
         }
 
         /// <summary>
@@ -271,11 +280,17 @@ namespace ArmyAnt.Network {
                 if (client.mutex != null)
                 {
                     var buffer = new byte[BUFFER_SIZE];
-                    var result = await client.client.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), client.cancellationToken.Token);
-                    if (result.MessageType == WebSocketMessageType.Close)
+                    WebSocketReceiveResult result = null;
+                    try
+                    {
+                        result = await client.client.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), client.cancellationToken.Token);
+                    }catch(Exception e)
+                    {
+                        result = null;
+                    }
+                    if (result == null || result.MessageType == WebSocketMessageType.Close)
                     {
                         await KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false);
-                        OnTcpServerDisonnected(index);
                     }
                     else if (result.Count > 0)
                     {
@@ -283,8 +298,8 @@ namespace ArmyAnt.Network {
                     }
                 }
             }
-            await CheckToRemoveObsoleteConnections();
             OnTcpServerDisonnected(index);
+            await CheckToRemoveObsoleteConnections();
         }
 
         /// <summary>
