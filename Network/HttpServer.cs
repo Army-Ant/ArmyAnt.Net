@@ -248,22 +248,7 @@ namespace ArmyAnt.Network {
             }
             else
             {
-                await Task.WhenAll(ReceiveAsync(index, client, context), Task.Run(()=> { WebSocketWatching(index, websocketContext, client.cancellationToken); }));
-            }
-        }
-
-        private void WebSocketWatching(int index, HttpListenerWebSocketContext client, CancellationTokenSource cancellationToken)
-        {
-            while (true)
-            {
-                System.Diagnostics.Debug.WriteLine("client: " + index + ", state: " + client.WebSocket.State.ToString());
-                if (client.WebSocket == null || client.WebSocket.State == WebSocketState.Aborted || client.WebSocket.State == WebSocketState.Closed)
-                {
-                    KickOut(index, WebSocketCloseStatus.EndpointUnavailable, "Server lost your connection", false).Wait();
-                    client.WebSocket.Abort();
-                    System.Diagnostics.Debug.WriteLine("[before break] client: " + index + ", state: " + client.WebSocket.State.ToString());
-                    break;
-                }
+                await ReceiveAsync(index, client, context);
             }
         }
 
@@ -280,11 +265,11 @@ namespace ArmyAnt.Network {
                 if (client.mutex != null)
                 {
                     var buffer = new byte[BUFFER_SIZE];
-                    WebSocketReceiveResult result = null;
+                    WebSocketReceiveResult result;
                     try
                     {
                         result = await client.client.WebSocket.ReceiveAsync(new ArraySegment<byte>(buffer), client.cancellationToken.Token);
-                    }catch(Exception e)
+                    }catch(WebSocketException e)
                     {
                         result = null;
                     }
