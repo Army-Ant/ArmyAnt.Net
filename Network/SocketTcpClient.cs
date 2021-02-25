@@ -136,7 +136,7 @@ namespace ArmyAnt.Network
                                 Stop(true);
                                 break;
                             default:
-                                throw e;
+                                throw;
                         }
                     }
                 }

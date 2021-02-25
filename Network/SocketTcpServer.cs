@@ -200,7 +200,7 @@ namespace ArmyAnt.Network {
                                 case 10054: // 远程主机强迫关闭了一个现有的连接
                                     return 0;
                                 default:
-                                    throw e;
+                                    throw;
                             }
                         }
                     });

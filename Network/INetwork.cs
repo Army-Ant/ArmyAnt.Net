@@ -45,14 +45,6 @@ namespace ArmyAnt.Network {
     /// <param name="data"> 消息正文 </param>
     public delegate void OnWebsocketClientReceived(byte[] data);
 
-    public enum NetworkType {
-        Unknown,
-        Tcp,
-        Http,
-        Websocket,
-        Udp,
-    }
-
     public interface INetwork {
         /// <summary>
         /// 网络是否在运行
