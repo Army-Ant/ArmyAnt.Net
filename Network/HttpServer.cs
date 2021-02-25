@@ -263,7 +263,7 @@ namespace ArmyAnt.Network {
             {
                 if (client.mutex != null)
                 {
-                    var buffer = new byte[BUFFER_SIZE];
+                    var buffer = new byte[BUFFER_SIZE]; // TODO: 优化内存使用
                     WebSocketReceiveResult result;
                     try
                     {
