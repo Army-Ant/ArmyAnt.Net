@@ -13,10 +13,11 @@ namespace ArmyAnt.IO {
 
         public SqlTable GetWholeTable(string tableName) => Select(tableName);
         public SqlTable GetWholeView(string tableName) => Select(tableName);
-        public abstract string[] getTableAllFields(string table);
+        public abstract string[] GetTableAllFields(string table);
 
         // select * from [tableName]
         public SqlTable Select(string tableName, params SqlClause[] clauses) => Query("select * from " + tableName + OrganizeSqlClause(clauses));
+
         // select [columnNames] from [tableName]
         public SqlTable Select(string tableName, string[] columnNames, params SqlClause[] clauses) {
             string sql = "select ";
@@ -26,6 +27,7 @@ namespace ArmyAnt.IO {
                 }
             return Query(sql + "from " + tableName + OrganizeSqlClause(clauses));
         }
+
         // update [tableName] set [updatedData ( k=value , k=value ... )]
         public long Update(string tableName, IEnumerable<SqlField> data, params SqlClause[] clauses) {
             string sql = "update " + tableName + " set ";
@@ -35,6 +37,7 @@ namespace ArmyAnt.IO {
             sql = sql.Remove(sql.Length - 2);
             return Update(sql + OrganizeSqlClause(clauses));
         }
+
         // insert into [tableName] [insertedData (k , k , k ... ) values ( value , value , value ... )]
         public long InsertRow(string tableName, IEnumerable<SqlField> data) {
             string keys = "";
@@ -48,8 +51,10 @@ namespace ArmyAnt.IO {
 
             return Update("insert into " + tableName + " ( " + keys + " ) values ( " + values + " )");
         }
+
         // alter table [tableName] add [columnHead name dataType (others)...]
         public long InsertColumn(string tableName, params SqlFieldHead[] columnHead) => Update("alter table " + tableName + " add " + OrganizeColumnInfo(columnHead));
+
         // delete from [tableName]
         public long DeleteRow(string tableName, SqlClause where = null) {
             if(where != null && where.Type != SqlClauseType.Where)
@@ -57,11 +62,14 @@ namespace ArmyAnt.IO {
             return Update("delete from " + tableName + ' ' + OrganizeSqlClause(where));
 
         }
+
         // alter table [tableName] drop column [columnName]
         public long DeleteColumn(string tableName, string columnName) => Update("alter table " + tableName + " drop column " + columnName);
 
         public long CreateDatabase(string dbName) => Update("create database " + dbName);
+
         public long DeleteDatabase(string dbName) => Update("drop database " + dbName);
+
         public long CreateTable(SqlTable table) {
             string sql = "create table " + table.tableName + " ( ";
             for(int i = 0; i < table.Width; ++i) {
@@ -70,6 +78,7 @@ namespace ArmyAnt.IO {
             sql = sql.Remove(sql.Length - 2);
             return Update(sql + " )");
         }
+
         public long DeleteTable(string tableName) => Update("drop table " + tableName);
 
         public string OrganizeColumnInfo(params SqlFieldHead[] column) {
@@ -90,6 +99,7 @@ namespace ArmyAnt.IO {
         }
 
         public abstract SqlTable Query(string sql);
+
         public abstract long Update(string sql);
     }
 }

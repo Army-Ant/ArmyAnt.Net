@@ -16,7 +16,7 @@ namespace ArmyAnt.IO {
         }
         public static LogLevel LevelFromString(string str) {
             foreach(var i in Enum.GetValues(typeof(LogLevel))) {
-                if(i.ToString().ToLower() == str) {
+                if(i.ToString().ToLower() == str.ToLower()) {
                     return (LogLevel)i;
                 }
             }
