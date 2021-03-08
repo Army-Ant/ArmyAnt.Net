@@ -18,7 +18,7 @@ namespace ArmyAnt.Network
         public IPEndPoint IPEndPoint => Client.LocalEndPoint as IPEndPoint;
         /// <summary> 服务器网络位置 </summary>
         public IPEndPoint ServerIPEndPoint => Client.RemoteEndPoint as IPEndPoint;
-        /// <summary> 是否已连接, 等同于 <seealso cref="SocketTcpClient.Connected"/> </summary>
+        /// <summary> 是否已连接, 等同于 <seealso cref="TcpClient.Connected"/> </summary>
         public bool IsStarting => Connected;
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace ArmyAnt.Network
         /// </summary>
         ~SocketTcpClient()
         {
-            // receiveTask.Wait(); // 这个等待无关紧要, 倒是有可能阻塞垃圾回收器, 所以删除
+            // receiveTask.Wait(); // warning 这个等待无关紧要, 却有可能阻塞垃圾回收器, 所以删除
             Stop();
         }
 
@@ -91,6 +91,9 @@ namespace ArmyAnt.Network
             }
         }
 
+        /// <summary>
+        /// 获取用于监听消息的任务（线程）
+        /// </summary>
         public Task WaitingTask { get; }
 
         /// <summary>

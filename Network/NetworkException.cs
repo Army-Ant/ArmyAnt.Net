@@ -4,7 +4,7 @@ namespace ArmyAnt.Network {
     public enum ExceptionType {
         /// <summary> 未定义异常 </summary>
         Unknown,
-        /// <summary> 服务器尚未关闭, 不能重新开启 </summary>
+        /// <summary> 服务器尚未关闭, 不能重复开启 </summary>
         ServerHasNotStopped,
     }
 

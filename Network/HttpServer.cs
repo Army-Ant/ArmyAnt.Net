@@ -38,6 +38,11 @@ namespace ArmyAnt.Network {
         /// 开启Http服务器
         /// </summary>
         /// <param name="prefixes">可用URI集合, 调整URI以决定服务器的端口号及可访问方式, 前缀请使用 http(无SSL)或 https(有SSL), 并以"/"结尾</param>
+        /// <exception cref="ArgumentNullException"> 当 <paramref name="prefixes"/> 传入 null 或空数组, 或者数组成员中有为 null 的值时引发 </exception>
+        /// <exception cref="ArgumentException"> 当 <paramref name="prefixes"/> 传入参数不合法时引发, 参见 <seealso cref="HttpListenerPrefixCollection.Add(string)"/> </exception>
+        /// <exception cref="ObjectDisposedException"> 参见 <seealso cref="HttpListenerPrefixCollection.Add(string)"/> 以及 <seealso cref="HttpListener.Start()"/> </exception>
+        /// <exception cref="HttpListenerException"> 参见 <seealso cref="HttpListenerPrefixCollection.Add(string)"/> 以及 <seealso cref="HttpListener.Start()"/> </exception>
+        /// <exception cref="NetworkException"> 当服务器已经在运行中时引发 （<seealso cref="ExceptionType.ServerHasNotStopped"/>） </exception>
         public void Start(params string[] prefixes) {
             if(prefixes == null || prefixes.Length == 0) {
                 throw new ArgumentNullException();
@@ -58,6 +63,8 @@ namespace ArmyAnt.Network {
         /// <summary>
         /// 停止HTTP服务器, 断开所有WebSocket客户端连接
         /// </summary>
+        /// <exception cref="ObjectDisposedException"> 参见 <seealso cref="CancellationTokenSource.Cancel()"/> </exception>
+        /// <exception cref="AggregateException"> 参见 <seealso cref="CancellationTokenSource.Cancel()"/> </exception>
         public void Stop(bool nowait = false) {
             mutex.Lock();
             var waitingList = new List<Task>() { };
@@ -87,7 +94,9 @@ namespace ArmyAnt.Network {
             mutex.Unlock();
         }
 
-
+        /// <summary>
+        /// 获取当前所有正在等待中的线程
+        /// </summary>
         public (Task main, List<Task> clients) WaitingTask {
             get {
                 var ret = new List<Task>();
@@ -157,7 +166,7 @@ namespace ArmyAnt.Network {
         /// </summary>
         public OnTcpServerDisonnected OnTcpServerDisonnected { get; set; }
         /// <summary>
-        /// 收到来自WebSocket客户端的数据时回调
+        /// 收到来自WebSocket客户端的数据时回调 
         /// </summary>
         public OnTcpServerReceived OnTcpServerReceived { get; set; }
         /// <summary>
@@ -187,6 +196,10 @@ namespace ArmyAnt.Network {
                 }
                 websocket.client?.WebSocket?.Dispose();
             }
+            else
+            {
+                throw new ArgumentException("index is inexist", "index");
+            }
             mutex.Unlock();
         }
 
@@ -196,13 +209,14 @@ namespace ArmyAnt.Network {
         private async Task AcceptAsync() {
             while (self != null)
             {
-                HttpListenerContext context = null;
+                HttpListenerContext context;
                 try
                 {
                     context = await self.GetContextAsync();
                 }
                 catch (Exception e)
                 {
+                    // todo 应当对此处的异常进行细分，并分别进行处理和记录
                     await CheckToRemoveObsoleteConnections();
                     return;
                 }
@@ -225,6 +239,7 @@ namespace ArmyAnt.Network {
                 }
                 else
                 {
+                    // todo 这里要单开新线程以供HTTP消息response处理
                     OnHttpServerReceived(context.Request, context.Response, context.User);
                 }
                 await CheckToRemoveObsoleteConnections();
