@@ -97,13 +97,6 @@ namespace ArmyAnt.Network
         public Task WaitingTask { get; }
 
         /// <summary>
-        /// async 异步连接到指定服务器, 这是对标准库 ConnectAsync 重载参数的一个补充.
-        /// 参见<seealso cref="TcpClient.Connect(IPEndPoint)"/>
-        /// </summary>
-        /// <param name="server"> 服务器网络位置 </param>
-        public async Task ConnectAsync(IPEndPoint server) => await ConnectAsync(server.Address, server.Port);
-
-        /// <summary>
         /// 发送消息到已连接的服务器
         /// </summary>
         /// <param name="content"> 消息正文 </param>

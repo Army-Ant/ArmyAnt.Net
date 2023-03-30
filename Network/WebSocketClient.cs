@@ -24,20 +24,20 @@ namespace ArmyAnt.Network {
         /// 连接到本机上指定端口号的 Websocket 服务器
         /// </summary>
         /// <param name="port"> 要连接的服务器端口号 </param>
-        public void Start(ushort port) => Connect(new IPEndPoint(IPAddress.Loopback, port));
+        public void Start(ushort port) => Connect(IPAddress.Loopback, port);
 
         /// <summary>
         /// 连接到指定网络地址的服务器
         /// </summary>
         /// <param name="server"> 服务器的IP网络地址 </param>
-        public void Connect(IPEndPoint server) => ConnectAsync(server).Wait();
+        public void Connect(IPAddress addr, int port) => ConnectAsync(addr, port).Wait();
 
         /// <summary>
         /// async 异步连接到指定网络地址的Websocket服务器.
         /// </summary>
         /// <param name="server"> 服务器的IP网络地址 </param>
-        public async Task ConnectAsync(IPEndPoint server) {
-            await ConnectAsync(new UriBuilder("ws", server.Address.ToString(), server.Port).Uri);
+        public async Task ConnectAsync(IPAddress addr, int port) {
+            await ConnectAsync(new UriBuilder("ws", addr.ToString(), port).Uri);
         }
 
         /// <summary>

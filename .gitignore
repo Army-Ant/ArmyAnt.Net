@@ -197,8 +197,10 @@ $RECYCLE.BIN/
 
 # output directory
 /bin
+/bin.meta
 
 /packages
 *.xdc
 
 /obj
+/obj.meta

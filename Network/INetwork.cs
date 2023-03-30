@@ -121,12 +121,12 @@ namespace ArmyAnt.Network {
         /// 阻塞连接到指定服务器
         /// </summary>
         /// <param name="server"> 服务器位置 </param>
-        void Connect(IPEndPoint server);
+        void Connect(IPAddress addr, int port);
         /// <summary>
         /// async 异步连接到指定服务器
         /// </summary>
         /// <param name="server"> 服务器位置 </param>
-        Task ConnectAsync(IPEndPoint server);
+        Task ConnectAsync(IPAddress addr, int port);
         /// <summary>
         /// 向服务器发送消息
         /// </summary>
