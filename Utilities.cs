@@ -15,9 +15,7 @@ namespace ArmyAnt {
         }
         public static void Swap<T>(ref T a, ref T b)
         {
-            var temp = a;
-            a = b;
-            b = temp;
+            (a, b) = (b, a);
         }
         public static (T, T) GetSwap<T>(T a, T b)
         {
