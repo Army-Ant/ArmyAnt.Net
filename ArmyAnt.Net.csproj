@@ -41,9 +41,9 @@
     <None Remove="*.meta" />
     <Compile Remove="*.meta" />
     <EmbeddedResource Remove="*.meta" />
-    <None Remove="*\*.meta" />
-    <Compile Remove="*\*.meta" />
-    <EmbeddedResource Remove="*\*.meta" />
+    <None Remove="**\*.meta" />
+    <Compile Remove="**\*.meta" />
+    <EmbeddedResource Remove="**\*.meta" />
     <None Remove=".git" />
     <Compile Remove=".git" />
     <EmbeddedResource Remove=".git" />
