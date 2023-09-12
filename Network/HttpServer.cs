@@ -183,8 +183,7 @@ namespace ArmyAnt.Network {
         /// <returns></returns>
         private async Task KickOut(int index, WebSocketCloseStatus reason, string info, bool wait = true) {
             mutex.Lock();
-            if(clients.ContainsKey(index)) {
-                var websocket = clients[index];
+            if(clients.TryGetValue(index, out var websocket)) {
                 clients.Remove(index);
                 websocket.cancellationToken.Cancel();
                 await websocket.client?.WebSocket?.CloseAsync(reason, info, default);
