@@ -38,6 +38,21 @@
     <None Remove="obj\**" />
     <Compile Remove="obj\**" />
     <EmbeddedResource Remove="obj\**" />
+    <None Remove="*.meta" />
+    <Compile Remove="*.meta" />
+    <EmbeddedResource Remove="*.meta" />
+    <None Remove="*\*.meta" />
+    <Compile Remove="*\*.meta" />
+    <EmbeddedResource Remove="*\*.meta" />
+    <None Remove=".git" />
+    <Compile Remove=".git" />
+    <EmbeddedResource Remove=".git" />
+    <None Remove=".gitignore" />
+    <Compile Remove=".gitignore" />
+    <EmbeddedResource Remove=".gitignore" />
+    <None Remove=".gitattributes" />
+    <Compile Remove=".gitattributes" />
+    <EmbeddedResource Remove=".gitattributes" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
