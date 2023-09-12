@@ -31,8 +31,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="bin\*" />
-    <None Remove="obj\*" />
+    <None Remove="bin\**" />
+    <Compile Remove="bin\**" />
+    <EmbeddedResource Remove="bin\**" />
+    <None Remove="obj\**" />
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LICENSE">
