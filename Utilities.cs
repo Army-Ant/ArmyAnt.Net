@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace ArmyAnt {
     public static class Utilities
     {
-        public static T IsNotNull<T>(T obj)
+        public static T IsNotNull<T>(this T obj)
         {
             if (obj == null)
             {
@@ -13,16 +14,16 @@ namespace ArmyAnt {
             }
             return obj;
         }
-        public static void Swap<T>(ref T a, ref T b)
+        public static void Swap<T>(this T a, ref T b)
         {
             (a, b) = (b, a);
         }
-        public static (T, T) GetSwap<T>(T a, T b)
+        public static (T, T) GetSwap<T>(this T a, T b)
         {
             return (b, a);
         }
 
-        public static T[] GetArray<T>(IEnumerable<T> input) {
+        public static T[] GetArray<T>(this IEnumerable<T> input) {
             if(input == null) {
                 return null;
             }
@@ -42,7 +43,7 @@ namespace ArmyAnt {
             return ret;
         }
 
-        public static List<T> GetList<T>(IEnumerable<T> input) {
+        public static List<T> GetList<T>(this IEnumerable<T> input) {
             if(input == null) {
                 return null;
             }
@@ -63,5 +64,19 @@ namespace ArmyAnt {
             return ret;
         }
 
+        public static List<T> GetPropCollection<T>(this IEnumerable collection, string targetName) {
+            var ret = new List<T>();
+            foreach(var i in collection) {
+                var t = i.GetType();
+                foreach(var p in t.GetProperties()) {
+                    if(p.GetValue(i) is T tar) {
+                        ret.Add(tar);
+                    } else {
+                        throw new System.Reflection.TargetException();
+                    }
+                }
+            }
+            return ret;
+        }
     }
 }
