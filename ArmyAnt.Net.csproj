@@ -2,16 +2,15 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <RootNamespace>ArmyAnt</RootNamespace>
     <Version>0.0.1</Version>
-    <Authors>Jason Zhao Jie</Authors>
+    <Authors>Lila Reed</Authors>
     <Company>ArmyAnt Org</Company>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageId>com.armyant.net</PackageId>
+    <PackageId>com.armyant.base</PackageId>
     <Platforms>AnyCPU</Platforms>
-    <BaseOutputPath>$(SolutionDir)\bin\</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)\obj\</BaseIntermediateOutputPath>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
 
@@ -21,14 +20,6 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutDir>$(SolutionDir)bin</OutDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.1|AnyCPU'">
-    <WarningLevel>3</WarningLevel>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.1|AnyCPU'">
-    <WarningLevel>3</WarningLevel>
   </PropertyGroup>
 
   <ItemGroup>
@@ -59,6 +50,9 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="8.0.0" />
   </ItemGroup>
 
 </Project>
