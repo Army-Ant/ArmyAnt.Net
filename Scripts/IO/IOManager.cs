@@ -30,12 +30,15 @@ namespace ArmyAnt.IO {
         }
 
         public bool MkdirIfNotExist(params string[] path) {
-            var dir = ParsePath(path);
+            return MkdirIfNotExistWholePath(ParsePath(path));
+        }
+
+        public static bool MkdirIfNotExistWholePath(string path) {
             try {
-                if (System.IO.Directory.Exists(dir)) {
+                if (System.IO.Directory.Exists(path)) {
                     return true;
                 }
-                System.IO.Directory.CreateDirectory(dir);
+                System.IO.Directory.CreateDirectory(path);
             } catch (System.IO.IOException) {
                 return false;
             }
